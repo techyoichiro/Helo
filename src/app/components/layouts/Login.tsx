@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X } from 'lucide-react';
-import { FaGithub } from "react-icons/fa";
-import { Button } from "@/app/components/elements/ui/button";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
-import { createSupabaseClient } from '@/app/lib/utils/supabase/client'
+import { createSupabaseClient } from '@/app/lib/utils/supabase/client';
+import { Provider } from '@supabase/supabase-js';
+import { LoginButton } from '@/app/components/layouts/LoginButton';
 
 interface LoginProps {
   onClose: () => void;
@@ -28,19 +29,16 @@ export default function Login({ onClose, onLoginSuccess }: LoginProps) {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [onLoginSuccess, router]);
+  }, [onLoginSuccess, router, supabase.auth]);
 
-  const handleGithubLogin = async () => {
+  const handleLogin = useCallback(async (provider: Provider) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-      });
-
+      const { error } = await supabase.auth.signInWithOAuth({ provider });
       if (error) throw error;
     } catch (error) {
-      console.error("Error initiating GitHub login:", error);
-      let errorMessage = "GitHubログインに失敗しました。再試行してください。";
+      console.error(`Error initiating ${provider} login:`, error);
+      let errorMessage = `${provider}ログインに失敗しました。再試行してください。`;
       if (error instanceof Error) {
         errorMessage += ` エラー: ${error.message}`;
       }
@@ -48,7 +46,10 @@ export default function Login({ onClose, onLoginSuccess }: LoginProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
+
+  const handleGithubLogin = useCallback(() => handleLogin('github'), [handleLogin]);
+  const handleGoogleLogin = useCallback(() => handleLogin('google'), [handleLogin]);
 
   return (
     <>
@@ -64,21 +65,20 @@ export default function Login({ onClose, onLoginSuccess }: LoginProps) {
         </p>
       </div>
       <div className="flex flex-col items-center justify-center space-y-4">
-        <Button
-          variant="outline"
-          disabled={isLoading}
+        <LoginButton
+          provider="google"
+          icon={<FaGoogle className="h-5 w-5 mr-3" />}
+          text="Googleでログイン"
+          onClick={handleGoogleLogin}
+          isLoading={isLoading}
+        />
+        <LoginButton
+          provider="github"
+          icon={<FaGithub className="h-5 w-5 mr-3" />}
+          text="GitHubでログイン"
           onClick={handleGithubLogin}
-          className="rounded-full py-6 flex items-center justify-center hover:bg-gray-100 border font-semibold w-[260px]"
-        >
-          {isLoading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-current" />
-          ) : (
-            <>
-              <FaGithub className="h-5 w-5 mr-3" />
-              GitHubでログイン
-            </>
-          )}
-        </Button>
+          isLoading={isLoading}
+        />
       </div>
     </>
   );

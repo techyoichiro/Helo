@@ -7,7 +7,7 @@ import {
   AlertDialogContent,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../elements/ui/alert-dialog";
+} from "@/app/components/elements/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +15,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../elements/ui/dropdown-menu";
+} from "@/app/components/elements/ui/dropdown-menu";
 import { Button } from "../elements/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "../elements/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar";
 import { LucideUser } from 'lucide-react';
 import Login from "./Login";
 
