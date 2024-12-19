@@ -3,23 +3,27 @@ import { notFound } from "next/navigation";
 import ArticleList from "@/app/components/layouts/ArticleList";
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
 import { PageSEO } from "@/app/components/layouts/PageSEO";
-import { fetcher } from '@/app/lib/utils';
 import { client } from '@/app/lib/hono';
-import { Article } from '@/app/types/types';
-
-type ArticleResponse = Article[] | { error: string };
+import { Article, ArticleResponse, ErrorResponse, isErrorResponse } from '@/app/types/types';
+import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar";
 
 const REVALIDATE_TIME = 60;
 
 async function fetchArticlesByTopic(topic: string): Promise<ArticleResponse> {
   try {
-    const url = client.api.articles.$url({ query: { topic } });
-    const response = await fetcher<Article[]>(url.href, {
-      next: {
-        revalidate: REVALIDATE_TIME,
-      },
+    const response = await client.api.articles[':topic'].$get({
+      param: {
+        topic: topic
+      }
     });
-    return response;
+
+    const data = await response.json();
+
+    if (response.status === 500 || 'error' in data) {
+      return data as ErrorResponse;
+    }
+
+    return data as Article[];
   } catch (error) {
     console.error(`Failed to fetch articles for topic ${topic}:`, error);
     return { error: `Failed to fetch articles for topic ${topic}` };
@@ -28,30 +32,38 @@ async function fetchArticlesByTopic(topic: string): Promise<ArticleResponse> {
 
 interface TopicArticlesPageProps {
   params: { id: string };
-  searchParams: { page?: string };
+  searchParams: { page?: string; name?: string; logo?: string };
 }
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const { id: topic } = await params;
-  const { page } = await searchParams;
-  const pageNumber = Number(page) || 1;
-  const articles = await fetchArticlesByTopic(topic);
+  const { name, logo } = await searchParams;
+  const articlesOrError = await fetchArticlesByTopic(topic);
 
-  if ('error' in articles) {
+  if (isErrorResponse(articlesOrError)) {
+    console.error(articlesOrError.error);
     notFound();
   }
+
+  const articles = articlesOrError;
 
   return (
     <>
       <PageSEO
-        title={`Articles about ${topic}`}
-        description={`Browse the latest articles about ${topic}`}
+        title={`Articles about ${name || topic}`}
+        description={`Browse the latest articles about ${name || topic}`}
         path={`/search/${topic}`}
       />
 
       <ContentWrapper>
         <div className="py-10">
-          <h1 className="text-4xl font-bold mb-6">Articles about {topic}</h1>
+          <div className="flex items-center gap-4 mb-6">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={logo} alt={`${name || topic} logo`} />
+              <AvatarFallback>{name?.[0] || topic[0]}</AvatarFallback>
+            </Avatar>
+            <h1 className="text-4xl font-bold">{name || topic}</h1>
+          </div>
           <Suspense
             fallback={
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
@@ -61,10 +73,11 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
               </div>
             }
           >
-            <ArticleList items={articles} page={pageNumber} />
+            <ArticleList items={articles} />
           </Suspense>
         </div>
       </ContentWrapper>
     </>
   );
 }
+

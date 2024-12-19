@@ -3,12 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useUserStore } from "@/app/lib/hooks/useUserStore";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/app/components/elements/ui/alert-dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,7 +13,7 @@ import {
 import { Button } from "../elements/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar";
 import { LucideUser } from 'lucide-react';
-import Login from "./Login";
+import { LoginDialog } from "./LoginDialog";
 
 export function HeaderActions() {
   const { user, loading, fetchUserData, logout } = useUserStore();
@@ -44,7 +38,7 @@ export function HeaderActions() {
     return <div>Loading...</div>;
   }
   
-  const avatarUrl = user?.user_metadata?.avatarUrl ;
+  const avatarUrl = user?.user_metadata?.avatarUrl;
   const fullName = user?.user_metadata?.fullName;
   const email = user?.email;
 
@@ -76,18 +70,16 @@ export function HeaderActions() {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <AlertDialog open={isOpen}>
-          <AlertDialogTrigger asChild>
-            <Button onClick={() => setIsOpen(true)}>ログイン</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-            <AlertDialogTitle></AlertDialogTitle>
-            <Login
-              onClose={() => setIsOpen(false)}
+        <>
+          <Button onClick={() => setIsOpen(true)}>ログイン</Button>
+          {isOpen && (
+            <LoginDialog
+              isOpen={isOpen}
+              onOpenChange={setIsOpen}
               onLoginSuccess={handleLoginSuccess}
             />
-          </AlertDialogContent>
-        </AlertDialog>
+          )}
+        </>
       )}
     </>
   );

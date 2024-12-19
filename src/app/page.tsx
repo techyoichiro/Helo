@@ -3,14 +3,7 @@ import { PageSEO } from "./components/layouts/PageSEO";
 import { config } from "./site.config";
 import ArticleTabs from "./components/layouts/ArticleTabs";
 
-interface HomeProps {
-  searchParams: Promise<{ page?: string; tab?: string }>;
-}
-
-export default async function Home({ searchParams }: HomeProps) {
-  const params = await searchParams;
-  const page = Number(params.page) || 1;
-  const activeTab = params.tab === 'latest' ? 'latest' : 'trending';
+export default async function Home() {
 
   return (
     <div>
@@ -36,7 +29,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <section className="py-6">
         <ContentWrapper>
-          <ArticleTabs activeTab={activeTab} page={page} />
+          <ArticleTabs />
         </ContentWrapper>
       </section>
     </div>

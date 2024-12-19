@@ -1,8 +1,14 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
+import { zValidator } from '@hono/zod-validator'
 import { formatISO } from 'date-fns'
 import { Article } from '@/app/types/types'
 import { getOgImageUrl } from '@/app/lib/utils/ogImageFetcher'
 import { QiitaItem } from '@/app/types/types'
+
+const schema = z.object({
+    topic: z.string()
+})
 
 const QIITA_URL = process.env.QIITA_ENDPOINT_URL
 const QIITA_API_KEY = process.env.QIITA_API_KEY
@@ -96,19 +102,22 @@ const app = new Hono()
 
     // トップページ
     // トレンド記事取得
-    .get("/", async (c) => {
-        const topic = c.req.query('topic');
+    .get('/', async (c) => {
         try {
-            let zennPosts: Article[], qiitaPosts: Article[];
-
-            if (topic) {
-                zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?topicname=${topic}`);
-                qiitaPosts = await getQiitaPostsByTags(topic);
-            } else {
-                zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?trend`);
-                qiitaPosts = await getQiitaTrendingPosts();
-            }
-
+            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?trend`);
+            const qiitaPosts = await getQiitaTrendingPosts();
+            return c.json([...zennPosts, ...qiitaPosts]);
+        } catch (error) {
+            console.error('Failed to fetch trendPosts:', error);
+            return c.json({ error: 'Failed to fetch posts' }, 500);
+        }
+    })
+    
+    .get('/:topic', zValidator('param', schema), async (c) => {
+        try {
+            const { topic } = c.req.valid('param')
+            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?topicname=${topic}`);
+            const qiitaPosts = await getQiitaPostsByTags(topic);
             return c.json([...zennPosts, ...qiitaPosts]);
         } catch (error) {
             console.error('Failed to fetch posts:', error);
@@ -116,11 +125,13 @@ const app = new Hono()
         }
     })
 
+
     // 最新記事取得
-    .get("/latest", async (c) => {
+    .get('/latest', async (c) => {
         try {
             const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`);
             const qiitaPosts = await getQiitaLatestPosts();
+            console.log(zennPosts)
             return c.json([...zennPosts, ...qiitaPosts]);
         } catch (error) {
             console.error('Failed to fetch latest posts:', error);

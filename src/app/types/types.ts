@@ -29,9 +29,19 @@ export interface Article {
   title: string;
   url: string;
   published_at: string;
-  og_image_url: string | null;
+  og_image_url: string | undefined;
   topics: string[];
 }
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export function isErrorResponse(response: ArticleResponse): response is ErrorResponse {
+  return 'error' in response;
+}
+
+export type ArticleResponse = Article[] | ErrorResponse;
 
 export interface ArticleListProps {
   items: Article[] | { error: string };

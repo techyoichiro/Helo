@@ -11,10 +11,10 @@ export const config: PageConfig = { api: { bodyParser: false } };
 
 // basePath は API ルートのベースパスを指定します
 // 以降、新たに生やす API ルートはこのパスを基準に追加されます
-const app = new Hono().basePath("/api")
+const app = new Hono().basePath('/api')
 const route = app
-    .route("/articles", articles)
-    .route("/bookmark", bookmark)
+    .route('/articles', articles)
+    .route('/bookmark', bookmark)
 
 export type AppType = typeof route
 

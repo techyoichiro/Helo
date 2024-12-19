@@ -4,8 +4,9 @@ import { client } from '@/app/lib/hono';
 
 const ArticleList = dynamic(() => import('@/app/components/layouts/ArticleList'), { ssr: true });
 
+const REVALIDATE_TIME = 60;
+
 async function fetchArticles() {
-    const REVALIDATE_TIME = 60;
     const response = await client.api.articles.$get({
         next: { revalidate: REVALIDATE_TIME },
     });
@@ -14,6 +15,7 @@ async function fetchArticles() {
         return item;
     }
     if (response.status === 500) {
+        const data = await response.json()
         console.log(`Failed to fetch articles`);
         return { error: `Failed to fetch articles. Please try again later.` };
     }
@@ -38,7 +40,7 @@ export default async function Articles() {
   );
 }
 
-export function ArticleListSkeleton() {
+function ArticleListSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
       {[...Array(8)].map((_, i) => (

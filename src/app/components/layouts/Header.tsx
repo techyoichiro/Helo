@@ -25,7 +25,7 @@ export default function Header() {
               </Button>
             </Link>
             {/* bookmarks */}
-            <Link href="/bookmark">
+            <Link href="/dashboard">
               <Button variant="ghost" size="icon" className="hidden sm:flex">
                 <Bookmark className="h-5 w-5 text-gray-800"/>
               </Button>

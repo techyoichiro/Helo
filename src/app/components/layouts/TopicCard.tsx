@@ -11,7 +11,7 @@ interface TopicCardProps {
 
 const TopicCard: React.FC<TopicCardProps> = ({ name, path, logo }) => {
   return (
-    <Link href={`/search/${path}`} passHref>
+    <Link href={`/search/${path}?name=${encodeURIComponent(name)}&logo=${encodeURIComponent(logo)}`} passHref>
       <Card className="w-full px-1 py-4 hover:bg-gray-100 transition-colors duration-300 cursor-pointer">
         <CardHeader className="flex items-center justify-center">
           <Image
@@ -33,3 +33,4 @@ const TopicCard: React.FC<TopicCardProps> = ({ name, path, logo }) => {
 };
 
 export default TopicCard;
+

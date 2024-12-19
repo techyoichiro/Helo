@@ -9,7 +9,7 @@ const limiter = new RateLimiter({
   interval: 'second', // 1秒間に5リクエスト
 });
 
-export const getOgImageUrl = async (url: string): Promise<string | null> => {
+export const getOgImageUrl = async (url: string): Promise<string | undefined> => {
   // キャッシュをチェック
   const cachedImage = cache.get<string>(url);
   if (cachedImage) {
@@ -25,7 +25,7 @@ export const getOgImageUrl = async (url: string): Promise<string | null> => {
 
     if (!response.ok) {
       console.error(`ページの取得に失敗しました。ステータス: ${response.status}`);
-      return null;
+      return undefined;
     }
 
     const html = await response.text();
@@ -39,9 +39,9 @@ export const getOgImageUrl = async (url: string): Promise<string | null> => {
       cache.set(url, ogImage);
     }
 
-    return ogImage || null;
+    return ogImage || undefined;
   } catch (error) {
     console.error('OG画像の取得中にエラーが発生しました:', error);
-    return null;
+    return undefined;
   }
 };

@@ -7,7 +7,6 @@ import { Article } from "@/app/types/types"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { client } from '@/app/lib/hono'
-import { fetcher, type FetcherResponse } from '@/app/lib/utils'
 import { useUserStore } from '@/app/lib/hooks/useUserStore'
 
 dayjs.extend(relativeTime)
@@ -16,14 +15,15 @@ function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
 }
 
-export default function ArticleCard({ item }: { item: Article }) {
-  const [isBookmarked, setIsBookmarked] = useState(false)
+export default function ArticleCard({ item, initialIsBookmarked = false, bookmarkId }: { item: Article, initialIsBookmarked?: boolean, bookmarkId?: string }) {
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const { title, url, og_image_url, topics, published_at } = item
   const { hostname, origin } = new URL(url)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
 
   const { user, session } = useUserStore()
+
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (isBookmarking) return
@@ -40,24 +40,23 @@ export default function ArticleCard({ item }: { item: Article }) {
 
     setIsBookmarking(true)
     try {
-      const bookmarkUrl = client.api.bookmark.$url()
-      const response = await fetcher<{ id: string }>(bookmarkUrl.href, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
+      const response = await client.api.bookmark.$post({
+        json: {
           articleUrl: url,
-          ogImageUrl: og_image_url,
-        }),
+          ogImageUrl: og_image_url
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       })
-
-      if ('error' in response) {
-        throw new Error(response.error)
+      
+      if (response.ok) {
+        setIsBookmarked(true)
+      } else {
+        const errorData = await response.json()
+        console.error('Error bookmarking:', errorData.error)
       }
-
-      setIsBookmarked(true)
     } catch (error) {
       console.error('Error bookmarking:', error)
     } finally {
@@ -65,9 +64,64 @@ export default function ArticleCard({ item }: { item: Article }) {
     }
   }
 
+  const handleDeleteBookmark = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    console.log(bookmarkId)
+    if (isBookmarking || !bookmarkId) return
+
+    if (!user || !session) {
+      alert('ブックマークを削除するにはログインが必要です')
+      return
+    }
+
+    if (!session.access_token) {
+      console.log('セッションが無効です。再度ログインしてください。')
+      return
+    }
+
+    setIsBookmarking(true)
+    try {
+      const response = await client.api.bookmark[':id'].$delete ({
+        param: { id: bookmarkId }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+      })
+      
+      if (response.ok) {
+        setIsBookmarked(false)
+      } else {
+        const errorData = await response.json()
+        console.error('Error deleting bookmark:', errorData.error)
+      }
+    } catch (error) {
+      console.error('Error deleting bookmark:', error)
+    } finally {
+      setIsBookmarking(false)
+    }
+  }
+
+  const handleBookmarkAction = (e: React.MouseEvent) => {
+    if (isBookmarked) {
+      handleDeleteBookmark(e)
+    } else {
+      handleBookmark(e)
+    }
+  }
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // ブックマークボタンがクリックされた場合は、新しいタブで開かない
+    if ((e.target as HTMLElement).closest('.bookmark-button')) {
+      return
+    }
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300">
-      <a href={url} className="block p-4" target="_blank" rel="noopener noreferrer">
+      <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
         {topics && topics.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {topics.map((topic, index) => (
@@ -95,7 +149,8 @@ export default function ArticleCard({ item }: { item: Article }) {
             </div>
           )}
         </div>
-
+      </div>
+      <div className="px-4 mb-4">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <div className="flex items-center text-gray-400 text-xs">
@@ -115,9 +170,8 @@ export default function ArticleCard({ item }: { item: Article }) {
 
           <div className="flex items-center gap-4 text-gray-400">
             <button
-              onClick={handleBookmark}
+              onClick={handleBookmarkAction}
               className="flex items-center gap-1"
-              disabled={isBookmarking}
             >
               <Bookmark 
                 className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`} 
@@ -125,7 +179,7 @@ export default function ArticleCard({ item }: { item: Article }) {
             </button>
           </div>
         </div>
-      </a>
+      </div>
     </article>
   )
 }

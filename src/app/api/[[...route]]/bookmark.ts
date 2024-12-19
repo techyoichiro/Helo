@@ -1,16 +1,31 @@
 import { db } from "@/server/db"
 import { bookmarks, folders, bookmarkFolders } from "@/server/db/schema"
 import { zValidator } from "@hono/zod-validator"
+import { createFactory } from 'hono/factory';
 import { Hono } from "hono"
 import { z } from "zod"
 import { eq, and } from 'drizzle-orm'
 import { authMiddleware, subscriptionMiddleware } from '@/app/lib/utils/auth'
 import { Variables } from '@/app/lib/honoTypes'
 
+const factory = createFactory()
+
+export const getRouteAHandler = factory.createHandlers(
+  zValidator('param', z.object({ id: z.string().transform(Number) })),
+  async (c) => {
+    const { id } = c.req.valid('param');
+    return c.json({ id })
+  }
+)
+
 export const bookmarkSchema = z.object({
   articleUrl: z.string().url(),
   ogImageUrl: z.string().url().optional(),
   folderId: z.number().optional(),
+})
+
+const paramSchema = z.object({
+  id: z.string()
 })
 
 export const folderSchema = z.object({
@@ -19,10 +34,7 @@ export const folderSchema = z.object({
 
 const app = new Hono<{ Variables: Variables }>()
 
-.use('*', authMiddleware)
-.use('*', subscriptionMiddleware)
-
-  .get("/", async (c) => {
+  .get('/', authMiddleware, subscriptionMiddleware, async (c) => {
     const userId = c.get('user').id
     const userBookmarks = await db.query.bookmarks.findMany({
       where: eq(bookmarks.userId, userId),
@@ -30,7 +42,8 @@ const app = new Hono<{ Variables: Variables }>()
     })
     return c.json(userBookmarks)
   })
-  .post("/", zValidator("json", bookmarkSchema), async (c) => {
+
+  .post('/', authMiddleware, subscriptionMiddleware, zValidator("json", bookmarkSchema), async (c) => {
     const { articleUrl, ogImageUrl, folderId } = c.req.valid("json")
     const user = c.get('user')
     const isSubscribed = c.get('isSubscribed')
@@ -55,20 +68,30 @@ const app = new Hono<{ Variables: Variables }>()
 
     return c.json(newBookmark, 201)
   })
-  .delete("/:id", async (c) => {
-    const id = c.req.param('id')
+
+  .delete('/:id', authMiddleware, subscriptionMiddleware, zValidator('param', paramSchema), async (c) => {
+    const { id } = c.req.valid('param')
     const userId = c.get('user').id
+    try {
+      const result = await db.delete(bookmarks)
+        .where(and(
+          eq(bookmarks.id, parseInt(id)),
+          eq(bookmarks.userId, userId)
+        ))
+        .returning({ deletedId: bookmarks.id })
 
-    await db.delete(bookmarks)
-      .where(and(
-        eq(bookmarks.id, parseInt(id)),
-        eq(bookmarks.userId, userId)
-      ))
+      if (result.length === 0) {
+        return c.json({ error: 'Bookmark not found or already deleted' }, 404)
+      }
 
-    return c.json({ message: 'Bookmark deleted successfully' }, 200)
+      return c.json({ message: 'Bookmark deleted successfully', deletedId: result[0].deletedId }, 200)
+    } catch (error) {
+      console.error('Error deleting bookmark:', error)
+      return c.json({ error: 'Failed to delete bookmark' }, 500)
+    }
   })
 
-.post("/folders", zValidator("json", folderSchema), async (c) => {
+.post('/folders', zValidator("json", folderSchema), async (c) => {
   const { name } = c.req.valid("json")
   const user = c.get('user')
   const isSubscribed = c.get('isSubscribed')
@@ -87,7 +110,7 @@ const app = new Hono<{ Variables: Variables }>()
   return c.json(newFolder, 201)
 })
 
-.get("/folders/:id/bookmarks", async (c) => {
+.get('/folders/:id/bookmarks', async (c) => {
   const folderId = c.req.param('id')
   const userId = c.get('user').id
 

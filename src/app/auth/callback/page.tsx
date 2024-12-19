@@ -22,7 +22,6 @@ export default function AuthCallback() {
           return;
         }
 
-        console.log("Successfully authenticated");
         await fetchUserData();  // ユーザーデータを取得し、ストアを更新
         router.push('/'); // ログイン成功時にリダイレクト
       } catch (err) {
