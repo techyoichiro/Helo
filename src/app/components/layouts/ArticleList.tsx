@@ -20,7 +20,6 @@ const ArticleList = async ({
     )
   }
   const session = data.session
-  console.log(session)
   // エラーレスポンスのチェック
   if (!Array.isArray(items)) {
     return <div className="py-20 text-center font-bold text-lg text-red-500">{items.error}</div>;

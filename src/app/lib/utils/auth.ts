@@ -5,6 +5,7 @@ import { users } from '@/server/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function authMiddleware(c: Context, next: Next) {
+  
   const authHeader = c.req.header('Authorization')
   
   if (!authHeader) {

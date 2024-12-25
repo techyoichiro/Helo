@@ -1,3 +1,5 @@
+"use client"
+
 import React from "react"
 import Image from "next/image"
 import { Bookmark as bookmark } from "@/app/types/types"
@@ -10,7 +12,7 @@ function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
 }
 
-export async function BookmarkCard({ item }: { item: bookmark }) {
+export function BookmarkCard({ item }: { item: bookmark }) {
   const { title, articleUrl, ogImageUrl, publishedAt } = item
   const { hostname, origin } = new URL(articleUrl)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
@@ -24,7 +26,7 @@ export async function BookmarkCard({ item }: { item: bookmark }) {
   }
 
   return (
-    <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300">
+    <article className="rounded-lg overflow-hidden mb-4 w-full border border-gray-300">
       <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
         <div className="flex justify-between gap-4 mb-4">
           <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>

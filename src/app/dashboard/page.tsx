@@ -25,7 +25,6 @@ export default async function BookmarksPage() {
   }
 
   const { data: bookmarks, error: bookmarksError } = await fetchBookmarks(session)
-  console.log('BookmarksPage: Bookmarks fetched:', bookmarks, 'Error:', bookmarksError)
 
   if (bookmarksError) {
     console.error("Error fetching bookmarks:", bookmarksError)
@@ -42,8 +41,8 @@ export default async function BookmarksPage() {
         <h1 className="text-2xl font-bold">ブックマーク</h1>
       </div>
       <ScrollArea className="h-[calc(100vh-6rem)]">
-        <div className="rounded-lg border bg-card">
-          <div className="p-4 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg">
+          <div className="p-4 text-muted-foreground">
             {!bookmarks ? (
               <p>読み込み中...</p>
             ) : bookmarks.length > 0 ? (

@@ -1,4 +1,3 @@
-import React from 'react'
 import { Bookmark } from '@/app/types/types'
 import { BookmarkCard } from './BookmarkCard'
 
