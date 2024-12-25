@@ -1,10 +1,9 @@
-import { Search, Bookmark } from "lucide-react"
+import { Search, Bookmark } from 'lucide-react'
 import { Button } from "@/app/components/elements/ui/button"
-import { HeaderActions } from "./HeaderActions"
+import { HeaderActionsServer } from "./HeaderActionsServer"
 import Link from "next/link"
 
-export default function Header() {
-
+export default async function Header() {
   return (
     <header>
       <div className="mx-auto container px-4 max-w-[960px]">
@@ -31,10 +30,11 @@ export default function Header() {
               </Button>
             </Link>
             {/* Login */}
-            <HeaderActions />
+            <HeaderActionsServer />
           </div>
         </div>
       </div>
     </header>
   )
 }
+

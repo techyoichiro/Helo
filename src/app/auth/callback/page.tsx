@@ -1,39 +1,23 @@
-"use client";
+import { NextResponse } from 'next/server'
+import { createClient } from '@/app/lib/utils/supabase/server'
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useUserStore } from '@/app/lib/hooks/useUserStore';
+export async function GET(request: Request) {
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
 
-export default function AuthCallback() {
-  const router = useRouter();
-  const supabase = createClientComponentClient();
-  const fetchUserData = useUserStore(state => state.fetchUserData);
+  if (code) {
+    const supabase = await createClient()
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+    try {
+      await supabase.auth.exchangeCodeForSession(code)
+      return NextResponse.redirect(new URL('/', request.url))
+    } catch (error) {
+      console.error('Error:', error)
+      return NextResponse.redirect(new URL('/auth/auth-code-error', request.url))
+    }
+  }
 
-        if (error) {
-          console.error("Error exchanging code for session:", error);
-          alert("認証コードの交換に失敗しました。詳細はコンソールを確認してください。");
-          router.push('/auth/auth-code-error');
-          return;
-        }
-
-        await fetchUserData();  // ユーザーデータを取得し、ストアを更新
-        router.push('/'); // ログイン成功時にリダイレクト
-      } catch (err) {
-        console.error("Unexpected error during auth callback:", err);
-        alert("不明なエラーが発生しました。詳細はコンソールを確認してください。");
-        router.push('/auth/auth-code-error');
-      }
-    };
-
-    handleAuthCallback();
-  }, [router, supabase, fetchUserData]);
-
-  return <div>認証処理を実行中...</div>;
+  // Return the user to an error page with instructions
+  return NextResponse.redirect(new URL('/auth/auth-code-error', request.url))
 }
 

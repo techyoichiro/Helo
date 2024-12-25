@@ -131,7 +131,6 @@ const app = new Hono()
         try {
             const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`);
             const qiitaPosts = await getQiitaLatestPosts();
-            console.log(zennPosts)
             return c.json([...zennPosts, ...qiitaPosts]);
         } catch (error) {
             console.error('Failed to fetch latest posts:', error);

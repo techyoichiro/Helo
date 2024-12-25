@@ -1,56 +1,35 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useCallback } from "react";
-import { FaGithub, FaGoogle } from "react-icons/fa";
-import { useRouter } from 'next/navigation';
-import { createSupabaseClient } from '@/app/lib/utils/supabase/client';
-import { Provider } from '@supabase/supabase-js';
-import { LoginButton } from '@/app/components/layouts/LoginButton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/elements/ui/dialog";
+import { useState } from "react"
+import { FaGithub, FaGoogle } from "react-icons/fa"
+import { LoginButton } from '@/app/components/layouts/LoginButton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/elements/ui/dialog"
+import { signIn } from '@/app/actions/auth'
 
 interface LoginDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onLoginSuccess: () => void;
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onLoginSuccess: () => void
 }
 
-export function LoginDialog({ isOpen, onOpenChange, onLoginSuccess }: LoginDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const supabase = createSupabaseClient();
-  const router = useRouter();
+export function LoginDialog({ isOpen, onOpenChange }: LoginDialogProps) {
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        onLoginSuccess();
-        onOpenChange(false);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [onLoginSuccess, router, supabase.auth, onOpenChange]);
-
-  const handleLogin = useCallback(async (provider: Provider) => {
-    setIsLoading(true);
+  const handleLogin = async (provider: 'github' | 'google') => {
+    setIsLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider });
-      if (error) throw error;
+      await signIn(provider)
     } catch (error) {
-      console.error(`Error initiating ${provider} login:`, error);
-      let errorMessage = `${provider}ログインに失敗しました。再試行してください。`;
+      console.error(`${provider}ログインエラー:`, error)
+      let errorMessage = `${provider}ログインに失敗しました。再試行してください。`
       if (error instanceof Error) {
-        errorMessage += ` エラー: ${error.message}`;
+        errorMessage += ` エラー: ${error.message}`
       }
-      alert(errorMessage);
+      alert(errorMessage)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [supabase.auth]);
-
-  const handleGithubLogin = useCallback(() => handleLogin('github'), [handleLogin]);
-  const handleGoogleLogin = useCallback(() => handleLogin('google'), [handleLogin]);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -68,19 +47,19 @@ export function LoginDialog({ isOpen, onOpenChange, onLoginSuccess }: LoginDialo
             provider="google"
             icon={<FaGoogle className="h-5 w-5 mr-3" />}
             text="Googleでログイン"
-            onClick={handleGoogleLogin}
+            onClick={() => handleLogin('google')}
             isLoading={isLoading}
           />
           <LoginButton
             provider="github"
             icon={<FaGithub className="h-5 w-5 mr-3" />}
             text="GitHubでログイン"
-            onClick={handleGithubLogin}
+            onClick={() => handleLogin('github')}
             isLoading={isLoading}
           />
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 

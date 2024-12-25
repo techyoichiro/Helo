@@ -19,10 +19,14 @@ export const getRouteAHandler = factory.createHandlers(
 )
 
 export const bookmarkSchema = z.object({
+  title: z.string(),
   articleUrl: z.string().url(),
   ogImageUrl: z.string().url().optional(),
+  publishedAt: z.string().refine((dateString) => !isNaN(Date.parse(dateString)), {
+    message: "Invalid date format",
+  }),
   folderId: z.number().optional(),
-})
+});
 
 const paramSchema = z.object({
   id: z.string()
@@ -35,30 +39,43 @@ export const folderSchema = z.object({
 const app = new Hono<{ Variables: Variables }>()
 
   .get('/', authMiddleware, subscriptionMiddleware, async (c) => {
-    const userId = c.get('user').id
-    const userBookmarks = await db.query.bookmarks.findMany({
-      where: eq(bookmarks.userId, userId),
-      orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)],
-    })
-    return c.json(userBookmarks)
+    try {
+      const userId = c.get('user').id
+      const userBookmarks = await db.query.bookmarks.findMany({
+        where: eq(bookmarks.userId, userId),
+        orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)],
+      })
+      return c.json(userBookmarks)
+    } catch (error) {
+      console.error('Error getting bookmark:', error)
+      return c.json({ error: 'Failed to getting bookmark' }, 500)
+    }
   })
 
   .post('/', authMiddleware, subscriptionMiddleware, zValidator("json", bookmarkSchema), async (c) => {
-    const { articleUrl, ogImageUrl, folderId } = c.req.valid("json")
+    const { title, articleUrl, ogImageUrl, publishedAt, folderId } = c.req.valid("json")
     const user = c.get('user')
     const isSubscribed = c.get('isSubscribed')
 
+    // フォルダー制限の確認
     const userFolders = await db.select().from(folders).where(eq(folders.userId, user.id))
     if (!isSubscribed && userFolders.length >= 3 && folderId) {
       return c.json({ error: 'Folder limit reached for non-subscribed users' }, 403)
     }
 
+    // `publishedAt` を Date 型に変換
+    const publishedAtDate = new Date(publishedAt)
+
+    // ブックマークをデータベースに挿入
     const [newBookmark] = await db.insert(bookmarks).values({
       userId: user.id,
+      title,
       articleUrl,
       ogImageUrl,
+      publishedAt: publishedAtDate,
     }).returning()
 
+    // フォルダーに関連付けがある場合
     if (folderId) {
       await db.insert(bookmarkFolders).values({
         bookmarkId: newBookmark.id,

@@ -43,6 +43,11 @@ export function isErrorResponse(response: ArticleResponse): response is ErrorRes
 
 export type ArticleResponse = Article[] | ErrorResponse;
 
+export type ApiResponse<T> = {
+  data?: T;
+  error?: string;
+};
+
 export interface ArticleListProps {
   items: Article[] | { error: string };
   page?: number;
@@ -67,3 +72,12 @@ export interface OGPResponse {
   error?: string;
 }
 
+export interface RawBookmark {
+  id: number
+  title: string
+  articleUrl: string
+  ogImageUrl: string | null
+  createdAt: string
+  publishedAt: string
+  userId: string
+}

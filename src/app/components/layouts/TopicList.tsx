@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import TopicCard from './TopicCard';
-import { createSupabaseClient } from '@/app/lib/utils/supabase/client'
+import { createClient } from '@/app/lib/utils/supabase/client'
 
 interface TrendProps {
   searchTerm: string;
@@ -21,14 +21,14 @@ interface IconRecord {
   url: string;
 }
 
-const Trend: React.FC<TrendProps> = ({ searchTerm }) => {
+const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTopics = async () => {
       setLoading(true);
-      const supabase = createSupabaseClient();
+      const supabase = createClient();
 
       const { data, error } = await supabase
         .from('topics')
@@ -72,4 +72,5 @@ const Trend: React.FC<TrendProps> = ({ searchTerm }) => {
   );
 };
 
-export default Trend;
+export default TopicList;
+

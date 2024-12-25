@@ -15,8 +15,10 @@ export const users = pgTable('users', {
 export const bookmarks = pgTable('bookmarks', {
   id: serial('id').primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
   articleUrl: text('article_url').notNull(),
   ogImageUrl: text('og_image_url'),
+  publishedAt: timestamp('published_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

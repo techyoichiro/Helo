@@ -6,8 +6,10 @@ import { Bookmark } from 'lucide-react'
 import { Article } from "@/app/types/types"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { client } from '@/app/lib/hono'
-import { useUserStore } from '@/app/lib/hooks/useUserStore'
+import { createClient } from '@/app/lib/utils/supabase/client'
+import { Session } from '@supabase/supabase-js'
+import { client } from "@/app/lib/hono"
+import { fetcher } from "@/app/lib/utils"
 
 dayjs.extend(relativeTime)
 
@@ -15,26 +17,28 @@ function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
 }
 
-export default function ArticleCard({ item, initialIsBookmarked = false, bookmarkId }: { item: Article, initialIsBookmarked?: boolean, bookmarkId?: string }) {
+interface ArticleCardProps {
+  item: Article
+  initialIsBookmarked?: boolean
+  bookmarkId?: string
+  session?: Session | null
+}
+
+export default function ArticleCard({ item, initialIsBookmarked = false, bookmarkId, session }: ArticleCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const { title, url, og_image_url, topics, published_at } = item
   const { hostname, origin } = new URL(url)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
 
-  const { user, session } = useUserStore()
+  const supabase = createClient()
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (isBookmarking) return
 
-    if (!user || !session) {
+    if (!session) {
       alert('ブックマークするにはログインが必要です')
-      return
-    }
-
-    if (!session.access_token) {
-      console.log('セッションが無効です。再度ログインしてください。')
       return
     }
 
@@ -42,8 +46,10 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
     try {
       const response = await client.api.bookmark.$post({
         json: {
+          title: title,
           articleUrl: url,
-          ogImageUrl: og_image_url
+          ogImageUrl: og_image_url,
+          publishedAt: published_at
         }
       }, {
         headers: {
@@ -57,6 +63,7 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
         const errorData = await response.json()
         console.error('Error bookmarking:', errorData.error)
       }
+      setIsBookmarked(true)
     } catch (error) {
       console.error('Error bookmarking:', error)
     } finally {
@@ -66,31 +73,23 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
 
   const handleDeleteBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
-    console.log(bookmarkId)
     if (isBookmarking || !bookmarkId) return
 
-    if (!user || !session) {
+    if (!session) {
       alert('ブックマークを削除するにはログインが必要です')
-      return
-    }
-
-    if (!session.access_token) {
-      console.log('セッションが無効です。再度ログインしてください。')
       return
     }
 
     setIsBookmarking(true)
     try {
-      const response = await client.api.bookmark[':id'].$delete ({
-        param: { id: bookmarkId }
-      },
-      {
-        headers: {
+      const response = await client.api.bookmark[':id'].$delete({
+        param: { id: bookmarkId },
+        }, {
+        headers: { 
           'Authorization': `Bearer ${session.access_token}`
         },
       })
-      
-      if (response.ok) {
+      if (response.ok) { 
         setIsBookmarked(false)
       } else {
         const errorData = await response.json()
@@ -112,7 +111,6 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
   }
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // ブックマークボタンがクリックされた場合は、新しいタブで開かない
     if ((e.target as HTMLElement).closest('.bookmark-button')) {
       return
     }
@@ -171,7 +169,7 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
           <div className="flex items-center gap-4 text-gray-400">
             <button
               onClick={handleBookmarkAction}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 bookmark-button"
             >
               <Bookmark 
                 className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`} 

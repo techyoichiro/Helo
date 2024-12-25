@@ -1,10 +1,8 @@
 import { Context, Next } from 'hono'
-import { createSupabaseClient } from '@/app/lib/utils/supabase/client'
+import { createClient } from '@/app/lib/utils/supabase/server'
 import { db } from '@/server/db'
 import { users } from '@/server/db/schema'
 import { eq } from 'drizzle-orm'
-
-const supabase = createSupabaseClient();
 
 export async function authMiddleware(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization')
@@ -19,6 +17,7 @@ export async function authMiddleware(c: Context, next: Next) {
   }
 
   try {
+    const supabase = await createClient()
     const { data: { user }, error } = await supabase.auth.getUser(token)
 
     if (error) {
