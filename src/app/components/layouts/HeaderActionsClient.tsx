@@ -16,17 +16,7 @@ import { LucideUser } from 'lucide-react'
 import { LoginDialog } from "./LoginDialog"
 import { signOut } from '@/app/actions/auth'
 import { createClient } from '@/app/lib/utils/supabase/client'
-
-interface User {
-  user: any
-  avatarUrl?: string
-  fullName?: string
-  email?: string
-}
-
-interface HeaderActionsClientProps {
-  initialUser: User | null
-}
+import { SessionUser, HeaderActionsClientProps } from '@/app/types/types'
 
 export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
   const [user, setUser] = useState(initialUser?.user || null)

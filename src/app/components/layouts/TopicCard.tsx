@@ -2,12 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '../elements/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
-
-interface TopicCardProps {
-  name: string;
-  path: string;
-  logo: string;
-}
+import { TopicCardProps } from "@/app/types/types"
 
 const TopicCard: React.FC<TopicCardProps> = ({ name, path, logo }) => {
   return (

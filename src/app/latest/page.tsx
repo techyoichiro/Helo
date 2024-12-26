@@ -1,5 +1,5 @@
 import { ContentWrapper } from '@/app/components/layouts/ContentWrapper';
-import { client } from '../lib/hono';
+import { client } from '@/app/lib/hono';
 import { Suspense } from 'react';
 import { ArticleListSkeleton } from '../components/layouts/ArticleTabs';
 import ArticleList from '../components/layouts/ArticleList';

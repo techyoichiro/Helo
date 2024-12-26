@@ -4,14 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/app/lib/utils"
 import { Button } from "@/app/components/elements/ui/button"
-
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
-  items: {
-    href: string
-    title: string
-    icon: React.ReactNode
-  }[]
-}
+import { SidebarProps } from "@/app/types/types"
 
 export function Sidebar({ className, items }: SidebarProps) {
   const pathname = usePathname()

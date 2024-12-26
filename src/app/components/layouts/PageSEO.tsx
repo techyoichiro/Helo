@@ -1,15 +1,6 @@
 import Head from "next/head";
 import { config } from "@/app/site.config";
-
-// types
-type Props = {
-  title: string;
-  path?: string;
-  description?: string;
-  ogImageUrl?: string;
-  noindex?: boolean;
-  removeSiteNameFromTitle?: boolean;
-};
+import { Props } from '@/app/types/types';
 
 export const PageSEO: React.FC<Props> = (props) => {
   const {

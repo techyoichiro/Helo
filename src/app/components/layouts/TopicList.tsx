@@ -3,23 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import TopicCard from './TopicCard';
 import { createClient } from '@/app/lib/utils/supabase/client'
-
-interface TrendProps {
-  searchTerm: string;
-}
-
-interface Topic {
-  name: string;
-  path: string;
-  logoUrl: string;
-}
-
-// データベースの型定義
-interface IconRecord {
-  name: string;
-  path: string;
-  url: string;
-}
+import { Topic, TrendProps, IconRecord } from '@/app/types/types'
 
 const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
   const [topics, setTopics] = useState<Topic[]>([]);

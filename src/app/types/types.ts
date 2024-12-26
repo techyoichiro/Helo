@@ -1,5 +1,6 @@
 import { User as AuthUser } from '@supabase/auth-helpers-nextjs';
 import { users, bookmarks, folders, bookmarkFolders, subscriptionStatusEnum } from '@/server/db/schema';
+import { Session, Provider } from '@supabase/supabase-js'
 
 // Drizzle ORMのスキーマから型を推論
 export type User = typeof users.$inferSelect;
@@ -50,7 +51,6 @@ export type ApiResponse<T> = {
 
 export interface ArticleListProps {
   items: Article[] | { error: string };
-  page?: number;
   itemsPerPage?: number;
 }
 
@@ -80,4 +80,85 @@ export interface RawBookmark {
   createdAt: string
   publishedAt: string
   userId: string
+}
+
+export interface ArticleCardProps {
+  item: Article
+  initialIsBookmarked?: boolean
+  bookmarkId?: string
+  session?: Session | null
+}
+
+export interface TopicArticlesPageProps {
+  params: { id: string };
+  searchParams: { page?: string; name?: string; logo?: string };
+}
+
+export interface Topic {
+  name: string;
+  path: string;
+  logoUrl: string;
+}
+
+export interface TrendProps {
+  searchTerm: string;
+}
+
+// データベースの型定義
+export interface IconRecord {
+  name: string;
+  path: string;
+  url: string;
+}
+
+export type BookMarkListProps = {
+  items: Bookmark[];
+};
+
+export interface SessionUser {
+  user: any
+  avatarUrl?: string
+  fullName?: string
+  email?: string
+}
+
+export interface HeaderActionsClientProps {
+  initialUser: SessionUser | null
+}
+
+export interface LoginButtonProps {
+    provider: Provider;
+    icon: React.ReactNode;
+    text: string;
+    onClick: () => Promise<void>;
+    isLoading: boolean;
+}
+
+export interface LoginDialogProps {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onLoginSuccess: () => void
+}
+
+export type Props = {
+  title: string;
+  path?: string;
+  description?: string;
+  ogImageUrl?: string;
+  noindex?: boolean;
+  removeSiteNameFromTitle?: boolean;
+};
+
+export interface TopicCardProps {
+  name: string;
+  path: string;
+  logo: string;
+}
+
+export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
+  items: {
+    href: string
+    title: string
+    icon: React.ReactNode
+  }[]
 }

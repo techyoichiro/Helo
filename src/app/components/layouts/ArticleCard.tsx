@@ -3,25 +3,15 @@
 import React, { useState } from "react"
 import Image from "next/image"
 import { Bookmark } from 'lucide-react'
-import { Article } from "@/app/types/types"
+import { ArticleCardProps } from "@/app/types/types"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { createClient } from '@/app/lib/utils/supabase/client'
-import { Session } from '@supabase/supabase-js'
 import { client } from "@/app/lib/hono"
-import { fetcher } from "@/app/lib/utils"
 
 dayjs.extend(relativeTime)
 
 function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
-}
-
-interface ArticleCardProps {
-  item: Article
-  initialIsBookmarked?: boolean
-  bookmarkId?: string
-  session?: Session | null
 }
 
 export default function ArticleCard({ item, initialIsBookmarked = false, bookmarkId, session }: ArticleCardProps) {
@@ -30,8 +20,6 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
   const { title, url, og_image_url, topics, published_at } = item
   const { hostname, origin } = new URL(url)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
-
-  const supabase = createClient()
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -121,11 +109,11 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
     <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300">
       <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
         {topics && topics.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-nowrap gap-2 mb-4">
             {topics.map((topic, index) => (
               <span
                 key={index}
-                className="text-gray-600 text-xs px-2 py-0.5 bg-gray-100 rounded-full"
+                className="text-gray-600 text-xs px-2 py-0.5 bg-gray-100 rounded-full whitespace-nowrap"
               >
                 #{topic}
               </span>

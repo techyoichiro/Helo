@@ -1,9 +1,5 @@
-import { Bookmark } from '@/app/types/types'
 import { BookmarkCard } from './BookmarkCard'
-
-type BookMarkListProps = {
-  items: Bookmark[];
-};
+import { BookMarkListProps } from "@/app/types/types"
 
 const BookMarkList = ({ items }: BookMarkListProps) => {
   const totalItemsCount = items.length;

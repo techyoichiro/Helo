@@ -5,12 +5,7 @@ import { FaGithub, FaGoogle } from "react-icons/fa"
 import { LoginButton } from '@/app/components/layouts/LoginButton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/elements/ui/dialog"
 import { signIn } from '@/app/actions/auth'
-
-interface LoginDialogProps {
-  isOpen: boolean
-  onOpenChange: (open: boolean) => void
-  onLoginSuccess: () => void
-}
+import { LoginDialogProps } from "@/app/types/types"
 
 export function LoginDialog({ isOpen, onOpenChange }: LoginDialogProps) {
   const [isLoading, setIsLoading] = useState(false)

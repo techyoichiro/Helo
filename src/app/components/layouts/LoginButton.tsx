@@ -1,13 +1,5 @@
 import { Button } from "@/app/components/elements/ui/button";
-import { Provider } from '@supabase/supabase-js';
-
-interface LoginButtonProps {
-    provider: Provider;
-    icon: React.ReactNode;
-    text: string;
-    onClick: () => Promise<void>;
-    isLoading: boolean;
-}
+import { LoginButtonProps } from "@/app/types/types"
   
 export const LoginButton: React.FC<LoginButtonProps> = ({ provider, icon, text, onClick, isLoading }) => (
 <Button

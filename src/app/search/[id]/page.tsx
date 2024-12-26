@@ -3,48 +3,19 @@ import { notFound } from "next/navigation";
 import ArticleList from "@/app/components/layouts/ArticleList";
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
 import { PageSEO } from "@/app/components/layouts/PageSEO";
-import { client } from '@/app/lib/hono';
-import { Article, ArticleResponse, ErrorResponse, isErrorResponse } from '@/app/types/types';
+import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/types';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar";
-
-const REVALIDATE_TIME = 60;
-
-async function fetchArticlesByTopic(topic: string): Promise<ArticleResponse> {
-  try {
-    const response = await client.api.articles[':topic'].$get({
-      param: {
-        topic: topic
-      }
-    });
-
-    const data = await response.json();
-
-    if (response.status === 500 || 'error' in data) {
-      return data as ErrorResponse;
-    }
-
-    return data as Article[];
-  } catch (error) {
-    console.error(`Failed to fetch articles for topic ${topic}:`, error);
-    return { error: `Failed to fetch articles for topic ${topic}` };
-  }
-}
-
-interface TopicArticlesPageProps {
-  params: { id: string };
-  searchParams: { page?: string; name?: string; logo?: string };
-}
+import { fetchArticlesByTopic } from "@/app/lib/api/search";
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
-  const { id: topic } = await params;
-  const { name, logo } = await searchParams;
+  const { id: topic } = params;
+  const { name, logo } = searchParams;
   const articlesOrError = await fetchArticlesByTopic(topic);
 
   if (isErrorResponse(articlesOrError)) {
     console.error(articlesOrError.error);
     notFound();
   }
-
   const articles = articlesOrError;
 
   return (

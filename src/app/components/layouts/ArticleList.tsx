@@ -1,11 +1,6 @@
 import { createClient } from "@/app/lib/utils/supabase/server";
 import ArticleCard from "./ArticleCard";
-import { Article } from '@/app/types/types';
-
-type ArticleListProps = {
-  items: Article[] | { error: string };
-  itemsPerPage?: number;
-};
+import { ArticleListProps } from '@/app/types/types';
 
 const ArticleList = async ({ 
   items, 

@@ -48,7 +48,7 @@ export default async function BookmarksPage() {
             ) : bookmarks.length > 0 ? (
               <BookMarkList items={bookmarks} />
             ) : (
-              <p>ブックマークがありません。</p>
+              <p className="text-center">ブックマークがありません。</p>
             )}
           </div>
         </div>
