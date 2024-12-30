@@ -38,6 +38,18 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
     }
   }
 
+  const handleDashboard = async () => {
+    router.push('/dashboard')
+  }
+
+  const handleProfile = async () => {
+    router.push('/dashboard/profile')
+  }
+
+  const handleSetting = async () => {
+    router.push('/dashboard/settings')
+  }
+
   const handleLoginSuccess = () => {
     setIsOpen(false)
     router.refresh()
@@ -67,9 +79,9 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
           <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuLabel>{fullName || email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>プロフィール</DropdownMenuItem>
-            <DropdownMenuItem>ブックマーク</DropdownMenuItem>
-            <DropdownMenuItem>設定</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfile}>プロフィール</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDashboard}>ブックマーク</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSetting}>設定</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>ログアウト</DropdownMenuItem>
           </DropdownMenuContent>

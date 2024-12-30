@@ -5,7 +5,7 @@ import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
 import { PageSEO } from "@/app/components/layouts/PageSEO";
 import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/types';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar";
-import { fetchArticlesByTopic } from "@/app/lib/api/search";
+import { fetchArticlesByTopic } from "@/app/lib/api/article";
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const { id: topic } = params;

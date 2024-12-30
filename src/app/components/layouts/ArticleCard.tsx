@@ -5,10 +5,13 @@ import Image from "next/image"
 import { Bookmark } from 'lucide-react'
 import { ArticleCardProps } from "@/app/types/types"
 import dayjs from "dayjs"
+import "dayjs/locale/ja";
 import relativeTime from "dayjs/plugin/relativeTime"
 import { client } from "@/app/lib/hono"
 
 dayjs.extend(relativeTime)
+// 日本語のロケールを設定
+dayjs.locale("ja");
 
 function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
@@ -49,11 +52,10 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
         setIsBookmarked(true)
       } else {
         const errorData = await response.json()
-        console.error('Error bookmarking:', errorData.error)
+        console.error('ブックマークの追加に失敗しました:', errorData)
       }
-      setIsBookmarked(true)
     } catch (error) {
-      console.error('Error bookmarking:', error)
+      console.error('ブックマークの追加中にエラーが発生しました', error)
     } finally {
       setIsBookmarking(false)
     }
@@ -81,10 +83,10 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
         setIsBookmarked(false)
       } else {
         const errorData = await response.json()
-        console.error('Error deleting bookmark:', errorData.error)
+        console.error(`ブックマークの削除に失敗しました: ${errorData.error}`)
       }
     } catch (error) {
-      console.error('Error deleting bookmark:', error)
+      console.error('ブックマークの削除中にエラーが発生しました')
     } finally {
       setIsBookmarking(false)
     }
@@ -137,9 +139,9 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
         </div>
       </div>
       <div className="px-4 mb-4">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <div className="flex items-center text-gray-400 text-xs">
+            <div className="flex items-center text-gray-400">
               <Image
                 src={getFaviconSrcFromOrigin(origin)}
                 width={14}
@@ -150,14 +152,15 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
               {displayHostname}
             </div>
             <time dateTime={published_at} className="text-gray-400">
-              {dayjs(published_at).fromNow()}
+            <p>{dayjs(published_at).fromNow()}に投稿</p>
             </time>
           </div>
 
           <div className="flex items-center gap-4 text-gray-400">
             <button
               onClick={handleBookmarkAction}
-              className="flex items-center gap-1 bookmark-button"
+              className={`flex items-center gap-1 bookmark-button ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isBookmarking}
             >
               <Bookmark 
                 className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`} 

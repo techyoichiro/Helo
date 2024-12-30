@@ -22,3 +22,22 @@ export async function fetchArticlesByTopic(topic: string): Promise<ArticleRespon
   }
 }
 
+export async function fetchTrendArticles() {
+  const REVALIDATE_TIME = 60;
+  const response = await client.api.articles.$get({
+    next: { revalidate: REVALIDATE_TIME },
+  });
+  
+  if (response.ok) {
+    const item = await response.json();
+    return item;
+  }
+  
+  if (response.status === 500) {
+    console.log('Failed to fetch articles');
+    return { error: 'Failed to fetch articles. Please try again later.' };
+  }
+
+  return { error: 'An unexpected error occurred.' };
+}
+

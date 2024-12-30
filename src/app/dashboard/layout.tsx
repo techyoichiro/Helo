@@ -33,9 +33,9 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <ContentWrapper>
-      <div className="flex mt-6">
+      <div className="flex mt-8">
         <Sidebar items={sidebarNavItems} />
-        <main className="flex-1">{children}</main>
+        <section className="flex-1 ml-6">{children}</section>
       </div>
     </ContentWrapper>
   )

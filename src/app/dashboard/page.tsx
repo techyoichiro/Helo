@@ -40,9 +40,9 @@ export default async function BookmarksPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">ブックマーク</h1>
       </div>
-      <ScrollArea className="h-[calc(100vh-6rem)]">
-        <div className="rounded-lg">
-          <div className="p-4 text-muted-foreground">
+      <div className="h-[calc(100vh-6rem)]">
+        <div className="rounded-">
+          <div className="py-4">
             {!bookmarks ? (
               <p>読み込み中...</p>
             ) : bookmarks.length > 0 ? (
@@ -52,7 +52,7 @@ export default async function BookmarksPage() {
             )}
           </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }

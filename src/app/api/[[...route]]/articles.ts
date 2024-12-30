@@ -104,9 +104,14 @@ const app = new Hono()
     // トレンド記事取得
     .get('/', async (c) => {
         try {
-            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?trend`);
+            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?count=10`);
             const qiitaPosts = await getQiitaTrendingPosts();
-            return c.json([...zennPosts, ...qiitaPosts]);
+            const allPosts = [...zennPosts, ...qiitaPosts];
+
+            // 日付順にソート (降順: 最新順)
+            const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+
+            return c.json(sortedPosts);
         } catch (error) {
             console.error('Failed to fetch trendPosts:', error);
             return c.json({ error: 'Failed to fetch posts' }, 500);
