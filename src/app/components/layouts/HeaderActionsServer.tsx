@@ -3,23 +3,43 @@ import { HeaderActionsClient } from './HeaderActionsClient'
 
 export async function HeaderActionsServer() {
   const supabase = await createClient()
-  const { data: session, error } = await supabase.auth.getSession()
 
-  if (error) {
-    console.error('Error fetching session:', error)
-    return null
-  }
+  try {
+    // 認証されたユーザー情報を取得
+    const { data: userData } = await supabase.auth.getUser()
 
-  if (!session || !session.session) {
-    // セッションが存在しない場合は初期ユーザーを null として設定
+    if (!userData?.user) {
+      // ユーザーが存在しない場合
+      return <HeaderActionsClient initialUser={null} />
+    }
+
+    const user = userData.user
+
+    // 必要なユーザーデータを抽出
+    const avatarUrl = user.user_metadata?.avatar_url || null
+    const fullName = user.user_metadata?.full_name || null
+
+    return (
+      <HeaderActionsClient
+        initialUser={{
+          user,
+          avatarUrl,
+          fullName,
+        }}
+      />
+    )
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      // セッションがない場合はエラーを無視してログアウト状態を処理
+      if (error.name === 'AuthSessionMissingError') {
+        return <HeaderActionsClient initialUser={null} />
+      }
+
+      console.error('Unexpected error fetching authenticated user:', error.message)
+    } else {
+      console.error('An unknown error occurred:', error)
+    }
+
     return <HeaderActionsClient initialUser={null} />
   }
-
-  const user = session.session.user
-
-  const avatarUrl = user.user_metadata?.avatar_url
-  const fullName = user.user_metadata?.full_name
-  const email = user.email
-
-  return <HeaderActionsClient initialUser={{ user, avatarUrl, fullName, email }} />
 }
