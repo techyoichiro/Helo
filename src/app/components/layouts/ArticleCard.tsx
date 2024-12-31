@@ -17,7 +17,8 @@ function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
 }
 
-export default function ArticleCard({ item, initialIsBookmarked = false, bookmarkId, session }: ArticleCardProps) {
+export default function ArticleCard({ item, initialIsBookmarked = false, session }: ArticleCardProps) {
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const { title, url, og_image_url, topics, published_at } = item
@@ -49,6 +50,8 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
       })
       
       if (response.ok) {
+        const newBookmark = await response.json();
+        setBookmarkId(newBookmark.id.toString());
         setIsBookmarked(true)
       } else {
         const errorData = await response.json()
@@ -64,7 +67,7 @@ export default function ArticleCard({ item, initialIsBookmarked = false, bookmar
   const handleDeleteBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (isBookmarking || !bookmarkId) return
-
+    
     if (!session) {
       alert('ブックマークを削除するにはログインが必要です')
       return
