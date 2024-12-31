@@ -8,9 +8,9 @@ import dayjs from "dayjs"
 import "dayjs/locale/ja";
 import relativeTime from "dayjs/plugin/relativeTime"
 import { client } from "@/app/lib/hono"
+import { LoginDialog } from "./LoginDialog"
 
 dayjs.extend(relativeTime)
-// 日本語のロケールを設定
 dayjs.locale("ja");
 
 function getFaviconSrcFromOrigin(hostname: string) {
@@ -18,9 +18,11 @@ function getFaviconSrcFromOrigin(hostname: string) {
 }
 
 export default function ArticleCard({ item, initialIsBookmarked = false, session }: ArticleCardProps) {
-  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null)
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const [isBookmarking, setIsBookmarking] = useState(false)
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+
   const { title, url, og_image_url, topics, published_at } = item
   const { hostname, origin } = new URL(url)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
@@ -30,7 +32,7 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
     if (isBookmarking) return
 
     if (!session) {
-      alert('ブックマークするにはログインが必要です')
+      setIsLoginDialogOpen(true)
       return
     }
 
@@ -50,8 +52,8 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
       })
       
       if (response.ok) {
-        const newBookmark = await response.json();
-        setBookmarkId(newBookmark.id.toString());
+        const newBookmark = await response.json()
+        setBookmarkId(newBookmark.id.toString())
         setIsBookmarked(true)
       } else {
         const errorData = await response.json()
@@ -67,9 +69,9 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
   const handleDeleteBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (isBookmarking || !bookmarkId) return
-    
+
     if (!session) {
-      alert('ブックマークを削除するにはログインが必要です')
+      setIsLoginDialogOpen(true)
       return
     }
 
@@ -111,68 +113,78 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
   }
 
   return (
-    <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300">
-      <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
-        {topics && topics.length > 0 && (
-          <div className="flex flex-nowrap gap-2 mb-4">
-            {topics.map((topic, index) => (
-              <span
-                key={index}
-                className="text-gray-600 text-xs px-2 py-0.5 bg-gray-100 rounded-full whitespace-nowrap"
-              >
-                #{topic}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex justify-between gap-4 mb-4">
-          <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>
-          {og_image_url && (
-            <div className="flex-shrink-0">
-              <Image
-                src={og_image_url}
-                width={140}
-                height={100}
-                className="rounded-lg object-cover"
-                alt=""
-              />
+    <>
+      <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300">
+        <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
+          {topics && topics.length > 0 && (
+            <div className="flex flex-nowrap gap-2 mb-4">
+              {topics.map((topic, index) => (
+                <span
+                  key={index}
+                  className="text-gray-600 text-xs px-2 py-0.5 bg-gray-100 rounded-full whitespace-nowrap"
+                >
+                  #{topic}
+                </span>
+              ))}
             </div>
           )}
-        </div>
-      </div>
-      <div className="px-4 mb-4">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center text-gray-400">
-              <Image
-                src={getFaviconSrcFromOrigin(origin)}
-                width={14}
-                height={14}
-                className="rounded-sm mr-1"
-                alt={displayHostname}
-              />
-              {displayHostname}
-            </div>
-            <time dateTime={published_at} className="text-gray-400">
-            <p>{dayjs(published_at).fromNow()}に投稿</p>
-            </time>
-          </div>
 
-          <div className="flex items-center gap-4 text-gray-400">
-            <button
-              onClick={handleBookmarkAction}
-              className={`flex items-center gap-1 bookmark-button ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isBookmarking}
-            >
-              <Bookmark 
-                className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`} 
-              />
-            </button>
+          <div className="flex justify-between gap-4 mb-4">
+            <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>
+            {og_image_url && (
+              <div className="flex-shrink-0">
+                <Image
+                  src={og_image_url}
+                  width={140}
+                  height={100}
+                  className="rounded-lg object-cover"
+                  alt=""
+                />
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </article>
+        <div className="px-4 mb-4">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center text-gray-400">
+                <Image
+                  src={getFaviconSrcFromOrigin(origin)}
+                  width={14}
+                  height={14}
+                  className="rounded-sm mr-1"
+                  alt={displayHostname}
+                />
+                {displayHostname}
+              </div>
+              <time dateTime={published_at} className="text-gray-400">
+                <p>{dayjs(published_at).fromNow()}に投稿</p>
+              </time>
+            </div>
+
+            <div className="flex items-center gap-4 text-gray-400">
+              <button
+                onClick={handleBookmarkAction}
+                className={`flex items-center gap-1 bookmark-button ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isBookmarking}
+              >
+                <Bookmark 
+                  className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`} 
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <LoginDialog
+        isOpen={isLoginDialogOpen}
+        onOpenChange={setIsLoginDialogOpen}
+        onLoginSuccess={() => {
+          setIsLoginDialogOpen(false)
+          location.reload()
+        }}
+      />
+    </>
   )
 }
-
