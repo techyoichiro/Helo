@@ -5,8 +5,11 @@ import TopicCard from './TopicCard';
 import { createClient } from '@/app/lib/utils/supabase/client'
 import { Topic, TrendProps, IconRecord } from '@/app/types/types'
 
+const MAX_VISIBLE_TOPICS = 42;
+
 const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [allTopics, setAllTopics] = useState<Topic[]>([]);
+  const [visibleTopics, setVisibleTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,16 +34,25 @@ const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
         logoUrl: icon.url
       })) || [];
 
-      setTopics(formattedTopics);
+      setAllTopics(formattedTopics);
+      setVisibleTopics(formattedTopics.slice(0, MAX_VISIBLE_TOPICS));
       setLoading(false);
     };
 
     fetchTopics();
   }, []);
 
-  const filteredTopics = topics.filter((topic) =>
-    topic.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const filteredTopics = allTopics.filter((topic) =>
+      topic.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (filteredTopics.length <= MAX_VISIBLE_TOPICS || searchTerm !== '') {
+      setVisibleTopics(filteredTopics);
+    } else {
+      setVisibleTopics(filteredTopics.slice(0, MAX_VISIBLE_TOPICS));
+    }
+  }, [searchTerm, allTopics]);
 
   if (loading) return <p>Loading...</p>;
 
@@ -48,7 +60,7 @@ const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
     <>
       <h2 className="text-2xl font-bold text-gray-900 mb-6 items-center">Trend</h2>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 md:gap-4 lg:gap-6">
-        {filteredTopics.map((topic) => (
+        {visibleTopics.map((topic) => (
           <TopicCard key={topic.path} path={topic.path} name={topic.name} logo={topic.logoUrl} />
         ))}
       </div>
