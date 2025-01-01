@@ -7,17 +7,25 @@ import { ArticleCardProps } from "@/app/types/types"
 import dayjs from "dayjs"
 import "dayjs/locale/ja";
 import relativeTime from "dayjs/plugin/relativeTime"
-import { client } from "@/app/lib/hono"
 import { LoginDialog } from "./LoginDialog"
+import { addBookmark, deleteBookmark } from "@/app/lib/api/bookmark"
 
 dayjs.extend(relativeTime)
 dayjs.locale("ja");
 
+// favicon取得用のヘルパー
 function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
 }
 
-export default function ArticleCard({ item, initialIsBookmarked = false, session }: ArticleCardProps) {
+export default function ArticleCard({
+  item,
+  initialIsBookmarked = false,
+  user,
+  session,
+}: ArticleCardProps & {
+  user?: any;
+}) {
   const [bookmarkId, setBookmarkId] = useState<string | null>(null)
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const [isBookmarking, setIsBookmarking] = useState(false)
@@ -27,37 +35,33 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
   const { hostname, origin } = new URL(url)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
 
+  // ブックマーク追加
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (isBookmarking) return
 
-    if (!session) {
+    // ユーザーがいない (未ログイン) なら、ログインダイアログを出す
+    if (!user || !session?.access_token) {
       setIsLoginDialogOpen(true)
       return
     }
 
     setIsBookmarking(true)
     try {
-      const response = await client.api.bookmark.$post({
-        json: {
-          title: title,
-          articleUrl: url,
-          ogImageUrl: og_image_url,
-          publishedAt: published_at
-        }
-      }, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+      const response = await addBookmark(session, {
+        title,
+        articleUrl: url,
+        ogImageUrl: og_image_url ?? "",
+        publishedAt: published_at
       })
-      
-      if (response.ok) {
-        const newBookmark = await response.json()
-        setBookmarkId(newBookmark.id.toString())
+
+      if (response.error) {
+        console.error(response.error)
+        return
+      }
+      if (response.data) {
+        setBookmarkId(response.data.id.toString())
         setIsBookmarked(true)
-      } else {
-        const errorData = await response.json()
-        console.error('ブックマークの追加に失敗しました:', errorData)
       }
     } catch (error) {
       console.error('ブックマークの追加中にエラーが発生しました', error)
@@ -66,37 +70,35 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
     }
   }
 
+  // ブックマーク削除
   const handleDeleteBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (isBookmarking || !bookmarkId) return
 
-    if (!session) {
+    if (!user || !session?.access_token) {
       setIsLoginDialogOpen(true)
       return
     }
 
     setIsBookmarking(true)
     try {
-      const response = await client.api.bookmark[':id'].$delete({
-        param: { id: bookmarkId },
-        }, {
-        headers: { 
-          'Authorization': `Bearer ${session.access_token}`
-        },
-      })
-      if (response.ok) { 
-        setIsBookmarked(false)
-      } else {
-        const errorData = await response.json()
-        console.error(`ブックマークの削除に失敗しました: ${errorData.error}`)
+      const response = await deleteBookmark(session, bookmarkId)
+      if (response.error) {
+        console.error(response.error)
+        return
       }
+
+      // 成功したら状態をリセット
+      setBookmarkId(null)
+      setIsBookmarked(false)
     } catch (error) {
-      console.error('ブックマークの削除中にエラーが発生しました')
+      console.error('ブックマークの削除中にエラーが発生しました', error)
     } finally {
       setIsBookmarking(false)
     }
   }
 
+  // ユーザーアクション (登録/削除) をまとめる
   const handleBookmarkAction = (e: React.MouseEvent) => {
     if (isBookmarked) {
       handleDeleteBookmark(e)
@@ -105,7 +107,9 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
     }
   }
 
+  // 記事部分をクリック→新規タブで開く
   const handleCardClick = (e: React.MouseEvent) => {
+    // ブックマークボタンのクリックだった場合は遷移しない
     if ((e.target as HTMLElement).closest('.bookmark-button')) {
       return
     }
@@ -138,12 +142,13 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
                   width={160}
                   height={90}
                   className="rounded-lg object-cover"
-                  alt=""
+                  alt="OGP画像"
                 />
               </div>
             )}
           </div>
         </div>
+
         <div className="px-4 mb-4">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
@@ -168,8 +173,8 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
                 className={`flex items-center gap-1 bookmark-button ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={isBookmarking}
               >
-                <Bookmark 
-                  className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`} 
+                <Bookmark
+                  className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`}
                 />
               </button>
             </div>
@@ -182,9 +187,10 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
         onOpenChange={setIsLoginDialogOpen}
         onLoginSuccess={() => {
           setIsLoginDialogOpen(false)
+          // ログイン成功時、サーバー側の状態を反映するにはリロードが手っ取り早い
           location.reload()
         }}
       />
     </>
-  )
+  );
 }

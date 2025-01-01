@@ -1,6 +1,7 @@
+import { client } from "@/app/lib/hono"
 import { Bookmark, RawBookmark, ApiResponse } from '@/app/types/types'
-import { client } from '@/app/lib/hono'
 
+// ブックマーク一覧の取得
 export async function fetchBookmarks(session: { access_token: string }): Promise<ApiResponse<Bookmark[]>> {
   try {
     const response = await client.api.bookmark.$get(undefined, {
@@ -32,11 +33,79 @@ export async function fetchBookmarks(session: { access_token: string }): Promise
   }
 }
 
+// ブックマーク追加
+export async function addBookmark(
+  session: { access_token: string },
+  payload: { title: string; articleUrl: string; ogImageUrl: string; publishedAt: string }
+): Promise<ApiResponse<Bookmark>> {
+  try {
+    const response = await client.api.bookmark.$post({
+      json: {
+        title: payload.title,
+        articleUrl: payload.articleUrl,
+        ogImageUrl: payload.ogImageUrl,
+        publishedAt: payload.publishedAt
+      }
+    },{
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('ブックマークの追加に失敗しました:', errorData)
+      return { error: 'Failed to add bookmark' }
+    }
+
+    const rawBookmark = await response.json() as RawBookmark
+    return { data: parseSingle(rawBookmark) }
+  } catch (error) {
+    console.error('ブックマークの追加中にエラーが発生しました', error)
+    return { error: 'Error adding bookmark' }
+  }
+}
+
+// ブックマーク削除
+export async function deleteBookmark(
+  session: { access_token: string },
+  bookmarkId: string
+): Promise<ApiResponse<null>> {
+  try {
+    const response = await client.api.bookmark[':id'].$delete({
+      param: { id: bookmarkId },
+    },{
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('ブックマークの削除に失敗しました:', errorData)
+      return { error: 'Failed to delete bookmark' }
+    }
+
+    return { data: null }
+  } catch (error) {
+    console.error('ブックマークの削除中にエラーが発生しました:', error)
+    return { error: 'Error deleting bookmark' }
+  }
+}
+
+//
+// 以下、受け取った RawBookmark データをパースするためのヘルパー関数
+//
 const parseResponse = (data: RawBookmark[]): Bookmark[] => {
   return data.map(item => ({
     ...item,
     createdAt: new Date(item.createdAt),
-    publishedAt: new Date(item.publishedAt)
+    publishedAt: new Date(item.publishedAt),
   }))
 }
 
+const parseSingle = (item: RawBookmark): Bookmark => ({
+  ...item,
+  createdAt: new Date(item.createdAt),
+  publishedAt: new Date(item.publishedAt),
+})

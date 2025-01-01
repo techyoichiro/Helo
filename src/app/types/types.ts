@@ -1,6 +1,5 @@
-import { User as AuthUser } from '@supabase/auth-helpers-nextjs';
+import type { User as SupabaseUser, Session, Provider } from '@supabase/supabase-js';
 import { users, bookmarks, folders, bookmarkFolders, subscriptionStatusEnum } from '@/server/db/schema';
-import { Session, Provider } from '@supabase/supabase-js'
 
 // Drizzle ORMのスキーマから型を推論
 export type User = typeof users.$inferSelect;
@@ -19,7 +18,7 @@ export type NewBookmarkFolder = typeof bookmarkFolders.$inferInsert;
 export type SubscriptionStatus = typeof subscriptionStatusEnum.enumValues[number];
 
 // 認証ユーザー情報とデータベースユーザー情報を統合した型
-export type CombinedUser = Omit<AuthUser, 'id'> & User & {
+export type CombinedUser = Omit<SupabaseUser, 'id'> & User & {
   user_metadata?: {
     fullName?: string;
     avatarUrl?: string;
