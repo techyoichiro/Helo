@@ -117,7 +117,7 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
       <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300">
         <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
           {topics && topics.length > 0 && (
-            <div className="flex flex-nowrap gap-2 mb-4">
+            <div className="flex flex-nowrap gap-2 mb-2">
               {topics.map((topic, index) => (
                 <span
                   key={index}
@@ -129,14 +129,14 @@ export default function ArticleCard({ item, initialIsBookmarked = false, session
             </div>
           )}
 
-          <div className="flex justify-between gap-4 mb-4">
+          <div className="flex justify-between gap-4 mb-2">
             <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>
             {og_image_url && (
               <div className="flex-shrink-0">
                 <Image
                   src={og_image_url}
-                  width={140}
-                  height={100}
+                  width={160}
+                  height={90}
                   className="rounded-lg object-cover"
                   alt=""
                 />

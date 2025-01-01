@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { cache } from 'hono/cache'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { formatISO } from 'date-fns'
@@ -100,12 +101,22 @@ const getZennPostsWithDetails = async (url: string): Promise<Article[]> => {
 // Hono application
 const app = new Hono()
 
+    .get(
+        '*',
+        cache({
+        cacheName: 'articles',
+        cacheControl: 'max-age=3600',
+        })
+    )
+
     // トップページ
     // トレンド記事取得
     .get('/', async (c) => {
         try {
-            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?count=10`);
-            const qiitaPosts = await getQiitaTrendingPosts();
+            const [zennPosts, qiitaPosts] = await Promise.all([
+                getZennPostsWithDetails(`${ZENN_URL}/api/articles?count=10`),
+                getQiitaTrendingPosts(),
+              ]);
             const allPosts = [...zennPosts, ...qiitaPosts];
 
             // 日付順にソート (降順: 最新順)
