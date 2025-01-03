@@ -1,6 +1,6 @@
 import BookMarkList from "@/app/components/features/bookmarks/BookMarkList"
 import { fetchBookmarks } from "@/app/lib/api/bookmark"
-import { createClient } from '@/app/lib/utils/supabase/server'
+import { createClient } from '@/app/lib/supabase/server'
 
 export default async function BookmarksPage() {
   const supabase = await createClient()

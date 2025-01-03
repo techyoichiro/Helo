@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { cn } from "@/app/lib/utils"
+import { cn } from "@/app/lib/utils/utils"
 
 export function MainNav({
   className,

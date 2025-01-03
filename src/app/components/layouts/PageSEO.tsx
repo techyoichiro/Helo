@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { config } from "@/app/site.config";
-import { Props } from '@/app/types/types';
+import { Props } from '@/app/types/common';
 
 export const PageSEO: React.FC<Props> = (props) => {
   const {

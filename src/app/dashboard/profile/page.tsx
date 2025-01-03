@@ -1,4 +1,4 @@
-import { createClient } from '@/app/lib/utils/supabase/server'
+import { createClient } from '@/app/lib/supabase/server'
 import { ProfileClient } from './ProfileClient'
 // import { fetchBookmarkedCount } from '@/app/lib/api/bookmark'
 

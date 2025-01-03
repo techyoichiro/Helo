@@ -1,5 +1,5 @@
 import { BookmarkCard } from '@/app/components/features/bookmarks/BookmarkCard'
-import { BookMarkListProps } from "@/app/types/types"
+import { BookMarkListProps } from "@/app/types/bookmark"
 
 const BookMarkList = ({ items }: BookMarkListProps) => {
   const totalItemsCount = items.length;

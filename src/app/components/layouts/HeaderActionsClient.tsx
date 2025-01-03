@@ -15,8 +15,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/ava
 import { LucideUser } from 'lucide-react'
 import { LoginDialog } from "../common/LoginDialog"
 import { signOut } from '@/app/actions/auth'
-import { createClient } from '@/app/lib/utils/supabase/client'
-import { HeaderActionsClientProps } from '@/app/types/types'
+import { createClient } from '@/app/lib/supabase/client'
+import { HeaderActionsClientProps } from '@/app/types/user'
 
 export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
   const [user, setUser] = useState(initialUser?.user || null)

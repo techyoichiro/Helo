@@ -1,4 +1,4 @@
-import { User } from '@/app/types/types';
+import { User } from '@/app/types/user';
 
 export interface Variables {
   user: User;

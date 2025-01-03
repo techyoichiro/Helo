@@ -1,5 +1,5 @@
 import { Context, Next } from 'hono'
-import { createClient } from '@/app/lib/utils/supabase/server'
+import { createClient } from '@/app/lib/supabase/server'
 import { db } from '@/server/db'
 import { users } from '@/server/db/schema'
 import { eq } from 'drizzle-orm'

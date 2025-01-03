@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar"
 import { LucideUser } from 'lucide-react'
-import { HeaderActionsClientProps } from '@/app/types/types'
+import { HeaderActionsClientProps } from '@/app/types/user'
 
 export function ProfileClient({ initialUser }: HeaderActionsClientProps) {
   const [user] = useState(initialUser?.user || null)

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import ArticleList from "@/app/components/features/articles/ArticleList";
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
 import { PageSEO } from "@/app/components/layouts/PageSEO";
-import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/types';
+import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/article';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar";
 import { fetchArticlesByTopic } from "@/app/lib/api/article";
 

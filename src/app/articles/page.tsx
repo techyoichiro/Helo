@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import dynamic from 'next/dynamic';
-import { client } from '@/app/lib/hono';
+import { client } from '@/app/lib/hono/hono';
 
-const ArticleList = dynamic(() => import('@/app/components/layouts/ArticleList'), { ssr: true });
+const ArticleList = dynamic(() => import('@/app/components/features/articles/ArticleList'), { ssr: true });
 
 const REVALIDATE_TIME = 60;
 

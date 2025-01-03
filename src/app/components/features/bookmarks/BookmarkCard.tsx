@@ -2,7 +2,7 @@
 
 import React from "react"
 import Image from "next/image"
-import { Bookmark as bookmark } from "@/app/types/types"
+import { Bookmark } from "@/app/types/bookmark"
 import dayjs from "dayjs"
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -12,7 +12,7 @@ function getFaviconSrcFromOrigin(hostname: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${hostname}`
 }
 
-export function BookmarkCard({ item }: { item: bookmark }) {
+export function BookmarkCard({ item }: { item: Bookmark }) {
   const { title, articleUrl, ogImageUrl, publishedAt } = item
   const { hostname, origin } = new URL(articleUrl)
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname

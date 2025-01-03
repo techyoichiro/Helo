@@ -1,4 +1,4 @@
-import { createClient } from '@/app/lib/utils/supabase/server'
+import { createClient } from '@/app/lib/supabase/server'
 import { HeaderActionsClient } from './HeaderActionsClient'
 
 export async function HeaderActionsServer() {

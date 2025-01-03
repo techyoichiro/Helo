@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardHeader, CardContent, CardTitle } from '../common/card';
+import { Card, CardHeader, CardContent, CardTitle } from '@/app/components/common/card';
 import Image from 'next/image';
 import Link from 'next/link';
-import { TopicCardProps } from "@/app/types/types"
+import { TopicCardProps } from "@/app/types/article"
 
 const TopicCard: React.FC<TopicCardProps> = ({ name, path, logo }) => {
   return (

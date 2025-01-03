@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import Image from "next/image"
 import { Bookmark } from 'lucide-react'
-import { ArticleCardProps } from "@/app/types/types"
+import { ArticleCardProps } from "@/app/types/article"
 import dayjs from "dayjs"
 import "dayjs/locale/ja";
 import relativeTime from "dayjs/plugin/relativeTime"

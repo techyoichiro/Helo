@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/app/lib/utils"
+import { cn } from "@/app/lib/utils/utils"
 import { Button } from "@/app/components/common/button"
-import { SidebarProps } from "@/app/types/types"
+import { SidebarProps } from "@/app/types/common"
 
 export function Sidebar({ className, items }: SidebarProps) {
   const pathname = usePathname()

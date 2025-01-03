@@ -1,6 +1,5 @@
 import { ContentWrapper } from '@/app/components/layouts/ContentWrapper';
-import { client } from '@/app/lib/hono';
-import { Suspense } from 'react';
+import { client } from '@/app/lib/hono/hono';
 import ArticleList from '@/app/components/features/articles/ArticleList';
 
 async function fetchArticles() {

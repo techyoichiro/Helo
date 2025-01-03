@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import TopicCard from './TopicCard';
-import { createClient } from '@/app/lib/utils/supabase/client'
-import { Topic, TrendProps, IconRecord } from '@/app/types/types'
+import { createClient } from '@/app/lib/supabase/client'
+import { Topic, TrendProps, IconRecord } from '@/app/types/article'
 
 const MAX_VISIBLE_TOPICS = 42;
 

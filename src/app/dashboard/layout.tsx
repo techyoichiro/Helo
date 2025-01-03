@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { Bookmark, User, Settings, HelpCircle } from 'lucide-react'
-import { Sidebar } from "@/app/components/elements/dashboard/sidebar"
+import { Sidebar } from "@/app/components/layouts/sidebar"
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper"
 
 export const metadata: Metadata = {

@@ -3,9 +3,8 @@ import { cache } from 'hono/cache'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { formatISO } from 'date-fns'
-import { Article } from '@/app/types/types'
+import { Article, QiitaItem } from '@/app/types/article'
 import { getOgImageUrl } from '@/app/lib/utils/ogImageFetcher'
-import { QiitaItem } from '@/app/types/types'
 
 const schema = z.object({
     topic: z.string()

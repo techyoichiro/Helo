@@ -1,6 +1,7 @@
 import { fetchTrendArticles } from '@/app/lib/api/article';
 import ArticleList from '@/app/components/features/articles/ArticleList';
-import { Article, ErrorResponse } from '@/app/types/types';
+import { Article } from '@/app/types/article';
+import { ErrorResponse } from '@/app/types/common';
 
 export default async function Articles() {
   const articlesOrError: Article[] | ErrorResponse = await fetchTrendArticles();

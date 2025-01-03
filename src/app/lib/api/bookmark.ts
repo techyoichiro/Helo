@@ -1,5 +1,6 @@
-import { client } from "@/app/lib/hono"
-import { Bookmark, RawBookmark, ApiResponse } from '@/app/types/types'
+import { client } from "@/app/lib/hono/hono"
+import { Bookmark, RawBookmark } from '@/app/types/bookmark'
+import { ApiResponse } from '@/app/types/common'
 
 // ブックマーク一覧の取得
 export async function fetchBookmarks(session: { access_token: string }): Promise<ApiResponse<Bookmark[]>> {

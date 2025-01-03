@@ -6,7 +6,7 @@ import { Hono } from "hono"
 import { z } from "zod"
 import { eq, and } from 'drizzle-orm'
 import { authMiddleware, subscriptionMiddleware } from '@/app/lib/utils/auth'
-import { Variables } from '@/app/lib/honoTypes'
+import { Variables } from '@/app/lib/hono/honoTypes'
 
 const factory = createFactory()
 

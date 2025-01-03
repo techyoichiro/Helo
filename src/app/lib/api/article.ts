@@ -1,5 +1,6 @@
-import { client } from '@/app/lib/hono';
-import { ArticleResponse, ErrorResponse, Article } from '@/app/types/types';
+import { client } from '@/app/lib/hono/hono';
+import { ArticleResponse, Article } from '@/app/types/article';
+import { ErrorResponse } from '@/app/types/common';
 
 export async function fetchArticlesByTopic(topic: string): Promise<ArticleResponse> {
   try {
