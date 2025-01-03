@@ -1,9 +1,9 @@
 "use client"
 
 import React, { useState } from 'react';
-import TopicList from '@/app/components/layouts/TopicList';
+import TopicList from '@/app/components/features/topics/TopicList';
 import { ContentWrapper } from '@/app/components/layouts/ContentWrapper';
-import { Input } from '@/app/components/elements/ui/input';
+import { Input } from '@/app/components/common/input';
 
 function Page() {
   const [searchTerm, setSearchTerm] = useState('');

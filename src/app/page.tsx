@@ -1,7 +1,7 @@
 import { ContentWrapper } from "./components/layouts/ContentWrapper";
 import { PageSEO } from "./components/layouts/PageSEO";
 import { config } from "./site.config";
-import ArticleTabs from "./components/layouts/ArticleTabs";
+import ArticleTabs from "@/app/components/features/articles/ArticleTabs";
 
 export default async function Home() {
 

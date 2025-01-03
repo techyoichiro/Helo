@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardHeader, CardContent, CardTitle } from '../elements/ui/card';
+import { Card, CardHeader, CardContent, CardTitle } from '../common/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { TopicCardProps } from "@/app/types/types"

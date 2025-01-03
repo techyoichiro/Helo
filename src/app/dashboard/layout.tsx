@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { Bookmark, User, Settings } from 'lucide-react'
+import { Bookmark, User, Settings, HelpCircle } from 'lucide-react'
 import { Sidebar } from "@/app/components/elements/dashboard/sidebar"
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper"
 
@@ -23,6 +23,11 @@ const sidebarNavItems = [
     title: "設定",
     href: "/dashboard/settings",
     icon: <Settings className="h-4 w-4" />,
+  },
+  {
+    title: "サポートとヘルプ",
+    href: "/dashboard/support",
+    icon: <HelpCircle className="h-4 w-4" />,
   },
 ]
 

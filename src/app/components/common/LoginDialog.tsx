@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { FaGithub, FaGoogle } from "react-icons/fa"
-import { LoginButton } from '@/app/components/layouts/LoginButton'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/elements/ui/dialog"
+import { LoginButton } from '@/app/components/common/LoginButton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/common/dialog"
 import { signIn } from '@/app/actions/auth'
 import { LoginDialogProps } from "@/app/types/types"
 

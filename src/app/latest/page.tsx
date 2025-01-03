@@ -1,8 +1,7 @@
 import { ContentWrapper } from '@/app/components/layouts/ContentWrapper';
 import { client } from '@/app/lib/hono';
 import { Suspense } from 'react';
-import { ArticleListSkeleton } from '../components/layouts/ArticleTabs';
-import ArticleList from '../components/layouts/ArticleList';
+import ArticleList from '@/app/components/features/articles/ArticleList';
 
 async function fetchArticles() {
   const REVALIDATE_TIME = 60;
@@ -26,15 +25,13 @@ export default async function Page() {
   return (
     <ContentWrapper>
       <div className="w-full max-w-4xl">
-        <Suspense fallback={<ArticleListSkeleton />}>
-          {Array.isArray(items) ? (
-            <ArticleList items={items} />
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-red-500">{items.error}</p>
-            </div>
+        {Array.isArray(items) ? (
+          <ArticleList items={items} />
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-red-500">{items.error}</p>
+          </div>
           )}
-        </Suspense>
       </div>
     </ContentWrapper>
   );

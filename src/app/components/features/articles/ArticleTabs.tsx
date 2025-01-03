@@ -1,5 +1,5 @@
 import { fetchTrendArticles } from '@/app/lib/api/article';
-import ArticleList from '@/app/components/layouts/ArticleList';
+import ArticleList from '@/app/components/features/articles/ArticleList';
 import { Article, ErrorResponse } from '@/app/types/types';
 
 export default async function Articles() {

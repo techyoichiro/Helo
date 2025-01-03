@@ -1,5 +1,5 @@
 import { createClient } from "@/app/lib/utils/supabase/server";
-import ArticleCard from "./ArticleCard";
+import ArticleCard from "@/app/components/features/articles/ArticleCard";
 import { ArticleListProps } from "@/app/types/types";
 
 const ArticleList = async ({ items }: ArticleListProps) => {

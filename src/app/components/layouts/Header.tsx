@@ -1,5 +1,5 @@
 import { Search, Bookmark } from 'lucide-react'
-import { Button } from "@/app/components/elements/ui/button"
+import { Button } from "@/app/components/common/button"
 import { HeaderActionsServer } from "./HeaderActionsServer"
 import Link from "next/link"
 

@@ -1,4 +1,4 @@
-import { Button } from "@/app/components/elements/ui/button";
+import { Button } from "@/app/components/common/button";
 import { LoginButtonProps } from "@/app/types/types"
   
 export const LoginButton: React.FC<LoginButtonProps> = ({ provider, icon, text, onClick, isLoading }) => (

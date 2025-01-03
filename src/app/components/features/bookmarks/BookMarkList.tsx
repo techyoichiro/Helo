@@ -1,4 +1,4 @@
-import { BookmarkCard } from './BookmarkCard'
+import { BookmarkCard } from '@/app/components/features/bookmarks/BookmarkCard'
 import { BookMarkListProps } from "@/app/types/types"
 
 const BookMarkList = ({ items }: BookMarkListProps) => {

@@ -7,7 +7,7 @@ import { ArticleCardProps } from "@/app/types/types"
 import dayjs from "dayjs"
 import "dayjs/locale/ja";
 import relativeTime from "dayjs/plugin/relativeTime"
-import { LoginDialog } from "./LoginDialog"
+import { LoginDialog } from "@/app/components/common/LoginDialog"
 import { addBookmark, deleteBookmark } from "@/app/lib/api/bookmark"
 
 dayjs.extend(relativeTime)

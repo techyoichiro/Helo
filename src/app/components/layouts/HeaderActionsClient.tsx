@@ -9,11 +9,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/app/components/elements/ui/dropdown-menu"
-import { Button } from "../elements/ui/button"
-import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar"
+} from "@/app/components/common/dropdown-menu"
+import { Button } from "../common/button"
+import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar"
 import { LucideUser } from 'lucide-react'
-import { LoginDialog } from "./LoginDialog"
+import { LoginDialog } from "../common/LoginDialog"
 import { signOut } from '@/app/actions/auth'
 import { createClient } from '@/app/lib/utils/supabase/client'
 import { HeaderActionsClientProps } from '@/app/types/types'
@@ -82,6 +82,7 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
             <DropdownMenuItem onClick={handleProfile}>プロフィール</DropdownMenuItem>
             <DropdownMenuItem onClick={handleDashboard}>ブックマーク</DropdownMenuItem>
             <DropdownMenuItem onClick={handleSetting}>設定</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSetting}>サポートとヘルプ</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>ログアウト</DropdownMenuItem>
           </DropdownMenuContent>

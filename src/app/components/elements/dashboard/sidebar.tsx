@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/app/lib/utils"
-import { Button } from "@/app/components/elements/ui/button"
+import { Button } from "@/app/components/common/button"
 import { SidebarProps } from "@/app/types/types"
 
 export function Sidebar({ className, items }: SidebarProps) {

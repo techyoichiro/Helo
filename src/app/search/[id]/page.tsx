@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import ArticleList from "@/app/components/layouts/ArticleList";
+import ArticleList from "@/app/components/features/articles/ArticleList";
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
 import { PageSEO } from "@/app/components/layouts/PageSEO";
 import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/types';
-import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/elements/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar";
 import { fetchArticlesByTopic } from "@/app/lib/api/article";
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {

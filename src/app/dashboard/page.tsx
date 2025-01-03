@@ -1,5 +1,4 @@
-import { ScrollArea } from "@/app/components/elements/ui/scroll-area"
-import BookMarkList from "@/app/components/layouts/BookMarkList"
+import BookMarkList from "@/app/components/features/bookmarks/BookMarkList"
 import { fetchBookmarks } from "@/app/lib/api/bookmark"
 import { createClient } from '@/app/lib/utils/supabase/server'
 
