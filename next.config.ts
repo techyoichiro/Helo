@@ -6,14 +6,24 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'res.cloudinary.com',
       },
-    ],
-    domains: [
-      'res.cloudinary.com',
-      'sjanswaiywvnoavtsohk.supabase.co',
-      'qiita-user-contents.imgix.net',
-      'www.google.com'
+      {
+        protocol: 'https',
+        hostname: 'sjanswaiywvnoavtsohk.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'qiita-user-contents.imgix.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
     ],
   },
   webpack: (config, { isServer }) => {
@@ -35,4 +45,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
