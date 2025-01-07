@@ -1,6 +1,7 @@
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { users } from '@/server/db/schema';
 
+// 既存の型定義
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
@@ -12,14 +13,15 @@ export type CombinedUser = Omit<SupabaseUser, 'id'> & User & {
     };
 };
 
-
+// SessionUser インターフェースの修正
 export interface SessionUser {
-    user: any
-    avatarUrl?: string
-    fullName?: string
-    email?: string
+    user: CombinedUser | null;
+    avatarUrl?: string | null;
+    fullName?: string | null;
+    email?: string | null;
+    providers?: string[];
 }
 
 export interface HeaderActionsClientProps {
-    initialUser: SessionUser | null
+    initialUser: SessionUser | null;
 }
