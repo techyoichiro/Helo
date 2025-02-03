@@ -1,6 +1,8 @@
 import BookMarkList from "@/app/components/features/bookmarks/BookMarkList"
 import { fetchBookmarks } from "@/app/lib/api/bookmark"
 import { createClient } from '@/app/lib/supabase/server'
+import AddBookmarkForm from "@/app/components/features/bookmarks/AddBookmarkForm"
+
 
 export default async function BookmarksPage() {
   const supabase = await createClient()
@@ -50,6 +52,8 @@ export default async function BookmarksPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">ブックマーク</h1>
       </div>
+
+      <AddBookmarkForm />
 
       <div className="h-[calc(100vh-6rem)]">
         <div className="py-4">
