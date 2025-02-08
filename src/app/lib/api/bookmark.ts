@@ -98,15 +98,14 @@ export async function deleteBookmark(
 // 以下、受け取った RawBookmark データをパースするためのヘルパー関数
 //
 const parseResponse = (data: RawBookmark[]): Bookmark[] => {
-  return data.map(item => ({
-    ...item,
-    createdAt: new Date(item.createdAt),
-    publishedAt: new Date(item.publishedAt),
-  }))
+  return data.map(item => parseSingle(item))
 }
 
-const parseSingle = (item: RawBookmark): Bookmark => ({
-  ...item,
-  createdAt: new Date(item.createdAt),
-  publishedAt: new Date(item.publishedAt),
-})
+// 単体用
+const parseSingle = (item: RawBookmark): Bookmark => {
+  return {
+    ...item,
+    createdAt: new Date(item.createdAt), 
+    publishedAt: item.publishedAt ? new Date(item.publishedAt) : null,
+  }
+}

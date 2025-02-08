@@ -53,7 +53,7 @@ export default async function BookmarksPage() {
         <h1 className="text-2xl font-bold">ブックマーク</h1>
       </div>
 
-      <AddBookmarkForm />
+      <AddBookmarkForm session={session} />
 
       <div className="h-[calc(100vh-6rem)]">
         <div className="py-4">

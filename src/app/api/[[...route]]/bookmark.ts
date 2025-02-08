@@ -7,6 +7,7 @@ import { z } from "zod"
 import { eq, and } from 'drizzle-orm'
 import { authMiddleware, subscriptionMiddleware } from '@/app/lib/utils/auth'
 import { Variables } from '@/app/lib/hono/honoTypes'
+import { fetchOgp } from "@/app/lib/utils/fetchOgp" 
 
 const factory = createFactory()
 
@@ -28,6 +29,10 @@ export const bookmarkSchema = z.object({
   folderId: z.number().optional(),
 });
 
+export const urlOnlySchema = z.object({
+  url: z.string().url(),
+})
+
 const paramSchema = z.object({
   id: z.string()
 })
@@ -38,6 +43,7 @@ export const folderSchema = z.object({
 
 const app = new Hono<{ Variables: Variables }>()
 
+  // ブックマーク一覧取得
   .get('/', authMiddleware, subscriptionMiddleware, async (c) => {
     try {
       const userId = c.get('user').id
@@ -52,16 +58,10 @@ const app = new Hono<{ Variables: Variables }>()
     }
   })
 
+  // ブックマーク追加
   .post('/', authMiddleware, subscriptionMiddleware, zValidator("json", bookmarkSchema), async (c) => {
-    const { title, articleUrl, ogImageUrl, publishedAt, folderId } = c.req.valid("json")
+    const { title, articleUrl, ogImageUrl, publishedAt } = c.req.valid("json")
     const user = c.get('user')
-    const isSubscribed = c.get('isSubscribed')
-
-    // フォルダー制限の確認
-    const userFolders = await db.select().from(folders).where(eq(folders.userId, user.id))
-    if (!isSubscribed && userFolders.length >= 3 && folderId) {
-      return c.json({ error: 'Folder limit reached for non-subscribed users' }, 403)
-    }
 
     // `publishedAt` を Date 型に変換
     const publishedAtDate = new Date(publishedAt)
@@ -75,17 +75,10 @@ const app = new Hono<{ Variables: Variables }>()
       publishedAt: publishedAtDate,
     }).returning()
 
-    // フォルダーに関連付けがある場合
-    if (folderId) {
-      await db.insert(bookmarkFolders).values({
-        bookmarkId: newBookmark.id,
-        folderId,
-      })
-    }
-
     return c.json(newBookmark, 201)
   })
 
+  // ブックマーク削除
   .delete('/:id', authMiddleware, subscriptionMiddleware, zValidator('param', paramSchema), async (c) => {
     const { id } = c.req.valid('param')
     const userId = c.get('user').id
@@ -108,45 +101,91 @@ const app = new Hono<{ Variables: Variables }>()
     }
   })
 
-.post('/folders', zValidator("json", folderSchema), async (c) => {
-  const { name } = c.req.valid("json")
-  const user = c.get('user')
-  const isSubscribed = c.get('isSubscribed')
+  // フォルダー作成
+  .post('/folders', zValidator("json", folderSchema), async (c) => {
+    const { name } = c.req.valid("json")
+    const user = c.get('user')
+    const isSubscribed = c.get('isSubscribed')
 
-  const userFolders = await db.select().from(folders).where(eq(folders.userId, user.id))
+    const userFolders = await db.select().from(folders).where(eq(folders.userId, user.id))
 
-  if (!isSubscribed && userFolders.length >= 3) {
-    return c.json({ error: 'Folder limit reached for non-subscribed users' }, 403)
-  }
+    if (!isSubscribed && userFolders.length >= 3) {
+      return c.json({ error: 'Folder limit reached for non-subscribed users' }, 403)
+    }
 
-  const [newFolder] = await db.insert(folders).values({
-    userId: user.id,
-    name,
-  }).returning()
+    const [newFolder] = await db.insert(folders).values({
+      userId: user.id,
+      name,
+    }).returning()
 
-  return c.json(newFolder, 201)
-})
+    return c.json(newFolder, 201)
+  })
 
-.get('/folders/:id/bookmarks', async (c) => {
-  const folderId = c.req.param('id')
-  const userId = c.get('user').id
+  // フォルダー取得
+  .get('/folders/:id/bookmarks', async (c) => {
+    const folderId = c.req.param('id')
+    const userId = c.get('user').id
 
-  const folderBookmarks = await db
-    .select({
-      id: bookmarks.id,
-      articleUrl: bookmarks.articleUrl,
-      ogImageUrl: bookmarks.ogImageUrl,
-      createdAt: bookmarks.createdAt,
-    })
-    .from(bookmarkFolders)
-    .innerJoin(bookmarks, eq(bookmarkFolders.bookmarkId, bookmarks.id))
-    .where(and(
-      eq(bookmarkFolders.folderId, parseInt(folderId)),
-      eq(bookmarks.userId, userId)
-    ))
+    const folderBookmarks = await db
+      .select({
+        id: bookmarks.id,
+        articleUrl: bookmarks.articleUrl,
+        ogImageUrl: bookmarks.ogImageUrl,
+        createdAt: bookmarks.createdAt,
+      })
+      .from(bookmarkFolders)
+      .innerJoin(bookmarks, eq(bookmarkFolders.bookmarkId, bookmarks.id))
+      .where(and(
+        eq(bookmarkFolders.folderId, parseInt(folderId)),
+        eq(bookmarks.userId, userId)
+      ))
 
-  return c.json(folderBookmarks)
-})
+    return c.json(folderBookmarks)
+  })
+
+  // フォルダー削除
+
+  // URLでブックマークを追加
+  .post('/url', authMiddleware, subscriptionMiddleware, zValidator("json", urlOnlySchema), async (c) => {
+      try {
+        const { url } = c.req.valid("json")
+        const user = c.get("user")
+  
+        // DBにURLを挿入
+        const [inserted] = await db.insert(bookmarks).values({
+          userId: user.id,
+          articleUrl: url,
+          title: "タイトル",          // 仮タイトル
+          ogImageUrl: null,          // 後で更新
+        }).returning()
+  
+        // ---- [非同期] ----
+        // レスポンス返却後にバックグラウンドでOGP取得してDB更新
+        setTimeout(async () => {
+          try {
+            const { title, ogImage } = await fetchOgp(url)
+  
+            // DBの該当レコードを更新
+            await db.update(bookmarks)
+              .set({
+                title,
+                ogImageUrl: ogImage || null,
+              })
+              .where(eq(bookmarks.id,inserted.id))
+          } catch (error) {
+            console.error("Failed to fetch OGP in background:", error)
+            // 実運用ではリトライキューを登録するなど
+          }
+        }, 0)
+        
+        return c.json(inserted, 201)
+      } catch (error) {
+        console.error("Error adding bookmark (fast OGP):", error)
+        return c.json({ error: "Failed to add bookmark by URL" }, 500)
+      }
+    }
+  )
+  
 
 export default app
 

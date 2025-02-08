@@ -16,7 +16,7 @@ export interface RawBookmark {
     articleUrl: string
     ogImageUrl: string | null
     createdAt: string
-    publishedAt: string
+    publishedAt?: string | null
     userId: string
 }
 

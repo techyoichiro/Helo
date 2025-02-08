@@ -2,8 +2,23 @@
 
 import { useState } from "react"
 import { BookmarkIcon } from "@heroicons/react/24/outline"
+import { client } from '@/app/lib/hono/hono';
+import { useRouter } from "next/navigation"
+import { z } from "zod"
 
-export default function AddBookmarkForm() {
+interface AddBookmarkFormProps {
+  session: {
+    access_token: string
+  }
+}
+
+// url は必須 & URL形式であることをチェック
+const urlSchema = z.object({
+  url: z.string().url()
+})
+
+export default function AddBookmarkForm({ session }: AddBookmarkFormProps) {
+  const router = useRouter()  
   const [url, setUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -14,21 +29,33 @@ export default function AddBookmarkForm() {
     setError("")
     setSuccess("")
 
+    // バリデーション
+    const parseResult = urlSchema.safeParse({ url })
+    if (!parseResult.success) {
+      // エラーの場合は API 呼び出しせずに終了
+      setIsLoading(false)
+      setError("有効なURLではありません。")
+      return
+    }
+
+    // APIにリクエスト
     try {
-      const res = await fetch("/api/bookmarks", {
-        method: "POST",
+      const res = await client.api.bookmark.url.$post({
+        json: { url },
+      },{
         headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
+          'Authorization': `Bearer ${session.access_token}`
+        }
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || "ブックマークの追加に失敗しました。")
+        const errorData = await res.json()
+        console.error('ブックマークの追加に失敗しました:', errorData)
+        setError('Failed to add bookmark')
       } else {
         setSuccess("ブックマークが追加されました！")
         setUrl("") // 入力フィールドをリセット
+        router.refresh()
       }
     } catch (err: any) {
       console.error("Error adding bookmark:", err)
@@ -55,10 +82,8 @@ export default function AddBookmarkForm() {
           className="bg-orange-500 text-white px-4 py-2 rounded disabled:bg-gray-300 flex items-center justify-center"
         >
           {isLoading ? (
-            // 追加中はテキストを出すなど、お好みで対応
             "追加中..."
           ) : (
-            // 通常時はアイコンだけ表示
             <BookmarkIcon className="h-5 w-5 text-white" aria-label="ブックマークを追加" />
           )}
         </button>

@@ -48,9 +48,11 @@ export function BookmarkCard({ item }: { item: Bookmark }) {
                 />
                 {displayHostname}
               </div>
-              <time dateTime={publishedAt.toString()} className="text-gray-400">
-                {dayjs(publishedAt).fromNow()} に投稿
-              </time>
+              {publishedAt && (
+                <time dateTime={publishedAt.toString()} className="text-gray-400">
+                  {dayjs(publishedAt).fromNow()} に投稿
+                </time>
+              )}
             </div>
           </div>
           {/* OGP画像 */}

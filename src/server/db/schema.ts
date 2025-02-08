@@ -18,7 +18,7 @@ export const bookmarks = pgTable('bookmarks', {
   title: text('title').notNull(),
   articleUrl: text('article_url').notNull(),
   ogImageUrl: text('og_image_url'),
-  publishedAt: timestamp('published_at').notNull(),
+  publishedAt: timestamp('published_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
