@@ -43,3 +43,10 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
       icon: React.ReactNode
     }[]
 }
+
+export interface TabProps extends React.HTMLAttributes<HTMLDivElement> {
+    items: {
+      href: string
+      title: string
+    }[]
+  }

@@ -1,28 +1,19 @@
 import { ContentWrapper } from '@/app/components/layouts/ContentWrapper';
-import { client } from '@/app/lib/hono/hono';
 import ArticleList from '@/app/components/features/articles/ArticleList';
-
-async function fetchArticles() {
-  const REVALIDATE_TIME = 60;
-  try {
-    const response = await client.api.articles.latest.$get({
-      next: { revalidate: REVALIDATE_TIME },
-    });
-    if (response.ok) {
-      return await response.json();
-    }
-    throw new Error('Failed to fetch articles');
-  } catch (error) {
-    console.error('Error fetching articles:', error);
-    return { error: 'Failed to fetch articles. Please try again later.' };
-  }
-}
+import { Tabs } from "@/app/components/layouts/Tabs"
+import { fetchLatestArticles } from '../lib/api/article';
 
 export default async function Page() {
-  const items = await fetchArticles();
+  const items = await fetchLatestArticles();
+  const tabItems = [
+    { href: "/", title: "トレンド" },
+    { href: "/latest", title: "最新" },
+  ]
 
   return (
     <ContentWrapper>
+      {/* タブ */}
+      <Tabs items={tabItems} className="mb-4" />
       <div className="w-full max-w-4xl">
         {Array.isArray(items) ? (
           <ArticleList items={items} />

@@ -22,7 +22,6 @@ export async function HeaderActionsServer() {
     return (
       <HeaderActionsClient
         initialUser={{
-          user,
           avatarUrl,
           fullName,
         }}

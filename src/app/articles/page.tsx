@@ -1,29 +1,11 @@
-import { Suspense } from "react";
-import dynamic from 'next/dynamic';
-import { client } from '@/app/lib/hono/hono';
+import { Suspense } from "react"
+import dynamic from "next/dynamic"
+import { fetchTrendArticles } from "@/app/lib/api/article"
 
-const ArticleList = dynamic(() => import('@/app/components/features/articles/ArticleList'), { ssr: true });
-
-const REVALIDATE_TIME = 60;
-
-async function fetchArticles() {
-    const response = await client.api.articles.$get({
-        next: { revalidate: REVALIDATE_TIME },
-    });
-    if (response.ok) {
-        const item = await response.json()
-        return item;
-    }
-    if (response.status === 500) {
-        const data = await response.json()
-        console.log(`Failed to fetch articles`);
-        return { error: `Failed to fetch articles. Please try again later.` };
-    }
-    return { error: 'An unexpected error occurred.' };
-}
+const ArticleList = dynamic(() => import("@/app/components/features/articles/ArticleList"), { ssr: true })
 
 export default async function Articles() {
-  const items = await fetchArticles();
+  const items = await fetchTrendArticles()
 
   return (
     <div className="w-full max-w-4xl">
@@ -37,7 +19,7 @@ export default async function Articles() {
         )}
       </Suspense>
     </div>
-  );
+  )
 }
 
 function ArticleListSkeleton() {
@@ -47,5 +29,5 @@ function ArticleListSkeleton() {
         <div key={i} className="aspect-video bg-gray-200 rounded-lg" />
       ))}
     </div>
-  );
+  )
 }

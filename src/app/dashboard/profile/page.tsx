@@ -1,8 +1,6 @@
-// src/app/profile/page.tsx
-
 import { createClient } from '@/app/lib/supabase/server';
 import { ProfileClient } from './ProfileClient';
-import { CombinedUser, SessionUser } from '@/app/types/user';
+import { CombinedUser } from '@/app/types/user';
 
 export default async function Page() {
     const supabase = await createClient();
@@ -19,8 +17,8 @@ export default async function Page() {
         const user = userData.user as CombinedUser;
 
         // 必要なユーザーデータを抽出
-        const avatarUrl = user.avatarUrl || null;
-        const fullName = user.user_metadata?.fullName || null;
+        const avatarUrl = user?.user_metadata?.avatar_url || null;
+        const fullName = user.user_metadata?.full_name || null;
         const email = user.email || null;
 
         // 連携プロバイダー情報を取得
@@ -29,7 +27,6 @@ export default async function Page() {
         return (
             <ProfileClient
                 initialUser={{
-                    user,
                     avatarUrl,
                     fullName,
                     email,

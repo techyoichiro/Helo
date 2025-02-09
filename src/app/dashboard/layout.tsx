@@ -25,7 +25,7 @@ const sidebarNavItems = [
     icon: <Settings className="h-4 w-4" />,
   },
   {
-    title: "サポートとヘルプ",
+    title: "ガイドとヘルプ",
     href: "/dashboard/support",
     icon: <HelpCircle className="h-4 w-4" />,
   },

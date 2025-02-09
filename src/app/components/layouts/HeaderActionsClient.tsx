@@ -19,7 +19,6 @@ import { createClient } from '@/app/lib/supabase/client'
 import { HeaderActionsClientProps } from '@/app/types/user'
 
 export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
-  const [user, setUser] = useState(initialUser?.user || null)
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
 
@@ -29,8 +28,6 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
       await supabase.auth.signOut()
       
       await signOut()
-      
-      setUser(null)
       
       router.refresh()
     } catch (error) {
@@ -55,13 +52,13 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
     router.refresh()
   }
   
-  const avatarUrl = user?.user_metadata?.avatar_url
-  const fullName = user?.user_metadata?.full_name
-  const email = user?.email
+  const avatarUrl = initialUser?.avatarUrl
+  const fullName = initialUser?.fullName
+  const email = initialUser?.email
 
   return (
     <>
-      {user ? (
+      {initialUser ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full ml-4">

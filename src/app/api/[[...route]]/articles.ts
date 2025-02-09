@@ -127,6 +127,20 @@ const app = new Hono()
             return c.json({ error: 'Failed to fetch posts' }, 500);
         }
     })
+
+    // 最新記事取得
+    .get('/latest', async (c) => {
+        try {
+            const [zennPosts, qiitaPosts] = await Promise.all([
+                getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`),
+                getQiitaLatestPosts(),
+              ]);
+            return c.json([...zennPosts, ...qiitaPosts]);
+        } catch (error) {
+            console.error('Failed to fetch latest posts:', error);
+            return c.json({ error: 'Failed to fetch latest posts' }, 500);
+        }
+    })
     
     .get('/:topic', zValidator('param', schema), async (c) => {
         try {
@@ -137,19 +151,6 @@ const app = new Hono()
         } catch (error) {
             console.error('Failed to fetch posts:', error);
             return c.json({ error: 'Failed to fetch posts' }, 500);
-        }
-    })
-
-
-    // 最新記事取得
-    .get('/latest', async (c) => {
-        try {
-            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`);
-            const qiitaPosts = await getQiitaLatestPosts();
-            return c.json([...zennPosts, ...qiitaPosts]);
-        } catch (error) {
-            console.error('Failed to fetch latest posts:', error);
-            return c.json({ error: 'Failed to fetch latest posts' }, 500);
         }
     })
 

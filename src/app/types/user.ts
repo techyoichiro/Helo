@@ -15,7 +15,6 @@ export type CombinedUser = Omit<SupabaseUser, 'id'> & User & {
 
 // SessionUser インターフェースの修正
 export interface SessionUser {
-    user: CombinedUser | null;
     avatarUrl?: string | null;
     fullName?: string | null;
     email?: string | null;

@@ -1,10 +1,16 @@
-import { ContentWrapper } from "./components/layouts/ContentWrapper";
-import { PageSEO } from "./components/layouts/PageSEO";
-import { config } from "./site.config";
-import ArticleTabs from "@/app/components/features/articles/ArticleTabs";
+// app/page.tsx （親）
+import { ContentWrapper } from "@/app/components/layouts/ContentWrapper"
+import { PageSEO } from "@/app/components/layouts/PageSEO"
+import { Tabs } from "@/app/components/layouts/Tabs"
+import { config } from "@/app/site.config"
+import Articles from "@/app/articles/page"
+
+const tabItems = [
+  { href: "/", title: "トレンド" },
+  { href: "/latest", title: "最新" },
+]
 
 export default async function Home() {
-
   return (
     <div>
       <PageSEO
@@ -14,24 +20,14 @@ export default async function Home() {
         removeSiteNameFromTitle={true}
       />
 
-      <section className="py-4">
-        <ContentWrapper>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-            {config.siteMeta.title}
-          </h1>
-          {config.siteMeta.description && (
-            <p className="mt-1 text-lg text-gray-400">
-              {config.siteMeta.description}
-            </p>
-          )}
-        </ContentWrapper>
-      </section>
-
       <section className="py-6">
         <ContentWrapper>
-          <ArticleTabs />
+          {/* タブ */}
+          <Tabs items={tabItems} className="mb-4" />
+          {/* 記事一覧*/}
+          <Articles />
         </ContentWrapper>
       </section>
     </div>
-  );
+  )
 }

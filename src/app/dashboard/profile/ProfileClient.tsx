@@ -1,44 +1,43 @@
-'use client';
-
-import { useState } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar";
-import { LucideUser } from 'lucide-react';
-import { HeaderActionsClientProps } from '@/app/types/user';
-import { Badge } from "@/app/components/common/badge";
+import { LucideUser } from 'lucide-react'
+import { HeaderActionsClientProps } from '@/app/types/user'
+import { Badge } from "@/app/components/common/badge"
 
 export function ProfileClient({ initialUser }: HeaderActionsClientProps) {
-    const [user] = useState(initialUser?.user || null);
+  const avatarUrl = initialUser?.avatarUrl || null
+  const fullName = initialUser?.fullName || null
+  const providers = initialUser?.providers || []
 
-    const avatarUrl = user?.user_metadata?.avatar_url;
-    const fullName = user?.user_metadata?.fullName;
-    const providers = initialUser?.providers || [];
-
-    return (
-        <div className="flex flex-col items-start p-4">
-            <div className="flex items-center">
-                <Avatar className="h-16 w-16">
-                    {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt="プロフィール" />
-                    ) : (
-                        <AvatarFallback>
-                            <LucideUser className="h-8 w-8" />
-                        </AvatarFallback>
-                    )}
-                </Avatar>
-                {fullName && (
-                    <span className="ml-4 text-xl font-semibold">
-                        {fullName}
-                    </span>
-                )}
-            </div>
-            {providers.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="text-sm font-medium text-gray-700">連携済み:</span>
-                    {providers.map(provider => (
-                        <Badge key={provider} provider={provider} />
-                    ))}
-                </div>
-            )}
+  return (
+    <div className="flex flex-col items-start p-4">
+      {/* アイコンと名前を横に並べる */}
+      <div className="flex items-center">
+        <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="プロフィール"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <LucideUser className="h-12 w-12 text-gray-600" />
+          )}
         </div>
-    );
+
+        {fullName && (
+          <span className="ml-4 text-xl font-semibold">
+            {fullName}
+          </span>
+        )}
+      </div>
+
+      {providers.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2 items-center">
+          <span className="text-sm font-medium text-gray-700">連携済み:</span>
+          {providers.map((provider) => (
+            <Badge key={provider} provider={provider} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }

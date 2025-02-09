@@ -20,16 +20,16 @@ export const Badge: React.FC<BadgeProps> = ({ provider }) => {
     const getProviderColor = (providerName: string) => {
         switch (providerName) {
             case 'google':
-                return 'bg-orange-300';
+                return 'bg-orange-100 text-orange-700';
             case 'github':
-                return 'bg-orange-300';
+                return 'bg-orange-100 text-orange-700';
             default:
                 return 'bg-gray-200 text-gray-800';
         }
     };
 
     return (
-        <span className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${getProviderColor(provider)}`}>
+        <span className={`flex px-2 py-1 rounded-full text-xs font-medium ${getProviderColor(provider)}`}>
             {getProviderIcon(provider)}
             {provider.charAt(0).toUpperCase() + provider.slice(1)}
         </span>
