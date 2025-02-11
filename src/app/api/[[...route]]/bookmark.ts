@@ -8,6 +8,7 @@ import { eq, and } from 'drizzle-orm'
 import { authMiddleware, subscriptionMiddleware } from '@/app/lib/utils/auth'
 import { Variables } from '@/app/lib/hono/honoTypes'
 import { fetchOgp } from "@/app/lib/utils/fetchOgp" 
+import { createClient } from "@/app/lib/supabase/server";
 
 const factory = createFactory()
 
@@ -145,46 +146,85 @@ const app = new Hono<{ Variables: Variables }>()
 
   // フォルダー削除
 
-  // URLでブックマークを追加
-  .post('/url', authMiddleware, subscriptionMiddleware, zValidator("json", urlOnlySchema), async (c) => {
-      try {
-        const { url } = c.req.valid("json")
-        const user = c.get("user")
+  app.post('/url', authMiddleware, subscriptionMiddleware, zValidator("json", urlOnlySchema), async (c) => {
+    try {
+      const { url } = c.req.valid("json")
+      const user = c.get("user")
   
-        // DBにURLを挿入
-        const [inserted] = await db.insert(bookmarks).values({
-          userId: user.id,
-          articleUrl: url,
-          title: "タイトル",          // 仮タイトル
-          ogImageUrl: null,          // 後で更新
-        }).returning()
+      // 1. DBにURLを挿入 (ogImageUrl は一旦 null)
+      const [inserted] = await db.insert(bookmarks).values({
+        userId: user.id,
+        articleUrl: url,
+        title: "タイトル", // 仮タイトル
+        ogImageUrl: null,
+      }).returning()
   
-        // ---- [非同期] ----
-        // レスポンス返却後にバックグラウンドでOGP取得してDB更新
-        setTimeout(async () => {
-          try {
-            const { title, ogImage } = await fetchOgp(url)
-  
-            // DBの該当レコードを更新
+      // ---- [非同期] ----
+      // レスポンス返却後にバックグラウンドでOGP取得してDB更新
+      setTimeout(async () => {
+        try {
+          const { title, ogImage } = await fetchOgp(url)
+          if (!ogImage) {
+            console.log("No ogImage found, skipping upload.")
+            // タイトルだけ更新
             await db.update(bookmarks)
-              .set({
-                title,
-                ogImageUrl: ogImage || null,
-              })
-              .where(eq(bookmarks.id,inserted.id))
-          } catch (error) {
-            console.error("Failed to fetch OGP in background:", error)
-            // 実運用ではリトライキューを登録するなど
+              .set({ title })
+              .where(eq(bookmarks.id, inserted.id))
+            return
           }
-        }, 0)
-        
-        return c.json(inserted, 201)
-      } catch (error) {
-        console.error("Error adding bookmark (fast OGP):", error)
-        return c.json({ error: "Failed to add bookmark by URL" }, 500)
-      }
+  
+          // 2. ogImage の画像データをダウンロード
+          const imageResponse = await fetch(ogImage)
+          if (!imageResponse.ok) {
+            console.error(`Failed to download OGP image from ${ogImage}`)
+            return
+          }
+          const arrayBuffer = await imageResponse.arrayBuffer()
+  
+          // 3. Supabase Storage にアップロード
+          const supabase = await createClient()
+          const fileName = `bookmark_${inserted.id}_${Date.now()}.jpg`  // 適宜拡張子を判定してもよい
+          const { error: uploadError } = await supabase
+            .storage
+            .from('bookmark_ogp')
+            .upload(fileName, new Blob([arrayBuffer]), {
+              contentType: 'image/jpeg'
+            })
+  
+          if (uploadError) {
+            console.error("Error uploading OGP to Supabase:", uploadError)
+            return
+          }
+  
+          // 4. アップロード後のパブリックURLを取得 (設定によってはサインドURL作成でも可)
+          const { data: publicData } = supabase
+            .storage
+            .from('bookmark_ogp')
+            .getPublicUrl(fileName)
+  
+          const publicUrl = publicData?.publicUrl || null
+          console.log("OGP uploaded to:", publicUrl)
+  
+          // 5. DBを更新（タイトルも上書き）
+          await db.update(bookmarks)
+            .set({
+              title,
+              ogImageUrl: publicUrl,
+            })
+            .where(eq(bookmarks.id, inserted.id))
+        } catch (error) {
+          console.error("Failed to fetch OGP in background:", error)
+        }
+      }, 0)
+  
+      // すぐにレスポンスを返す
+      return c.json(inserted, 201)
+  
+    } catch (error) {
+      console.error("Error adding bookmark (fast OGP):", error)
+      return c.json({ error: "Failed to add bookmark by URL" }, 500)
     }
-  )
+  })
   
 
 export default app

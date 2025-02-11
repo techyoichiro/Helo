@@ -58,7 +58,7 @@ const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
 
   return (
     <>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6 items-center">Trend</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6 items-center">Topics</h2>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 md:gap-4 lg:gap-6">
         {visibleTopics.map((topic) => (
           <TopicCard key={topic.path} path={topic.path} name={topic.name} logo={topic.logoUrl} />
@@ -69,4 +69,3 @@ const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
 };
 
 export default TopicList;
-

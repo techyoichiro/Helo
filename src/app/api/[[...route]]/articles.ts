@@ -134,8 +134,14 @@ const app = new Hono()
             const [zennPosts, qiitaPosts] = await Promise.all([
                 getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`),
                 getQiitaLatestPosts(),
-              ]);
-            return c.json([...zennPosts, ...qiitaPosts]);
+            ]);
+
+            const allPosts = [...zennPosts, ...qiitaPosts];
+
+            // 日付順にソート (降順: 最新順)
+            const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+            
+            return c.json(sortedPosts);
         } catch (error) {
             console.error('Failed to fetch latest posts:', error);
             return c.json({ error: 'Failed to fetch latest posts' }, 500);
