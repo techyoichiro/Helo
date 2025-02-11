@@ -57,13 +57,14 @@ export function BookmarkCard({ item }: { item: Bookmark }) {
           </div>
           {/* OGP画像 */}
           {ogImageUrl && (
-            <div className="flex-shrink-0">
+            <div className="relative w-[160px] h-[90px]">
               <Image
                 src={ogImageUrl}
-                width={160}
-                height={90}
-                className="rounded-lg object-cover"
                 alt=""
+                fill
+                sizes="160px"
+                style={{ objectFit: "cover" }}
+                className="rounded-lg"
               />
             </div>
           )}

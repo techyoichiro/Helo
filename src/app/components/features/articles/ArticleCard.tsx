@@ -136,12 +136,13 @@ export default function ArticleCard({
           <div className="flex justify-between gap-4 mb-2">
             <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>
             {og_image_url && (
-              <div className="flex-shrink-0">
+              <div className="relative w-[160px] h-[90px]">
                 <Image
                   src={og_image_url}
-                  width={160}
-                  height={90}
-                  className="rounded-lg object-cover"
+                  sizes="160px"
+                  fill
+                  style={{ objectFit: "cover" }}
+                  className="rounded-lg"
                   alt="OGP画像"
                 />
               </div>
