@@ -60,7 +60,7 @@ export function BookmarkCard({ item }: { item: Bookmark }) {
             <div className="relative w-[160px] h-[90px]">
               <Image
                 src={ogImageUrl}
-                alt=""
+                alt="OG Image"
                 fill
                 sizes="160px"
                 style={{ objectFit: "cover" }}
