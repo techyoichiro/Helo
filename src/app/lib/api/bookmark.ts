@@ -94,6 +94,37 @@ export async function deleteBookmark(
   }
 }
 
+// ブックマークの数を取得
+export async function fetchBookmarkCount(session: { access_token: string }): Promise<ApiResponse<number>> {
+  try {
+    const response = await client.api.bookmark.count.$get(undefined, {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 500) {
+        console.error('Failed to fetch bookmarks')
+        return { error: 'Failed to fetch bookmarks. Please try again later.' }
+      }
+      if (response.status === 401) {
+        const errorDetail = await response.json();
+        console.error('Authorization failed:', errorDetail);
+        return { error: 'Authorization Error' }
+      }
+      throw new Error('An unexpected error occurred.')
+    }
+    
+    const { count } = await response.json() as { count: number }
+
+    return { data: count } 
+  } catch (error) {
+    console.error('Error fetching bookmarks count:', error)
+    return { error: 'ブックマーク数取得に失敗しました' }
+  }
+}
+
 //
 // 以下、受け取った RawBookmark データをパースするためのヘルパー関数
 //

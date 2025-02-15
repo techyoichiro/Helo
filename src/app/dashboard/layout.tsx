@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { Bookmark, User, Settings, HelpCircle } from 'lucide-react'
+import { Bookmark, User, Settings, HelpCircle } from "lucide-react"
 import { Sidebar } from "@/app/components/layouts/sidebar"
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper"
 
@@ -38,11 +38,11 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <ContentWrapper>
-      <div className="flex mt-8">
+      <div className="flex flex-col md:flex-row mt-8">
+        {/* モバイル時は上部に表示、デスクトップ時は左側に表示 */}
         <Sidebar items={sidebarNavItems} />
-        <section className="flex-1 ml-6">{children}</section>
+        <section className="flex-1 md:ml-6">{children}</section>
       </div>
     </ContentWrapper>
   )
 }
-

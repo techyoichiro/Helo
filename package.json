@@ -51,6 +51,7 @@
     "string_decoder-browserify": "^0.0.1-security",
     "supabase": "^2.1.1",
     "tailwind-merge": "^2.5.5",
+    "tailwind-scrollbar-hide": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.1",
     "zustand": "^5.0.2"

@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator"
 import { createFactory } from 'hono/factory';
 import { Hono } from "hono"
 import { z } from "zod"
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { authMiddleware, subscriptionMiddleware } from '@/app/lib/utils/auth'
 import { Variables } from '@/app/lib/hono/honoTypes'
 import { fetchOgp } from "@/app/lib/utils/fetchOgp" 
@@ -145,8 +145,7 @@ const app = new Hono<{ Variables: Variables }>()
   })
 
   // フォルダー削除
-
-  app.post('/url', authMiddleware, subscriptionMiddleware, zValidator("json", urlOnlySchema), async (c) => {
+  .post('/url', authMiddleware, subscriptionMiddleware, zValidator("json", urlOnlySchema), async (c) => {
     try {
       const { url } = c.req.valid("json")
       const user = c.get("user")
@@ -225,7 +224,20 @@ const app = new Hono<{ Variables: Variables }>()
       return c.json({ error: "Failed to add bookmark by URL" }, 500)
     }
   })
+
+  // ブックマーク数取得
+  .get('/count', authMiddleware, subscriptionMiddleware, async (c) => {
+    const userId = c.get('user').id
+    const result = await db.select({
+      count: sql<number>`count(*)`
+    })
+    .from(bookmarks)
+    .where(eq(bookmarks.userId, userId))
   
+    const count = result[0]?.count ?? 0
+  
+    return c.json({ count })
+  })
 
 export default app
 

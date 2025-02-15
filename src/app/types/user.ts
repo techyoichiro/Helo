@@ -24,3 +24,8 @@ export interface SessionUser {
 export interface HeaderActionsClientProps {
     initialUser: SessionUser | null;
 }
+
+export interface ProfileClientProps {
+    initialUser: SessionUser | null;
+    count?: number;
+}
