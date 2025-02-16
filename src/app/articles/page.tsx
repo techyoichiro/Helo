@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import dynamic from "next/dynamic"
 import { fetchTrendArticles } from "@/app/lib/api/article"
+import { ArticleListSkeleton } from "@/app/components/features/articles/ArticleListSkeleton"
 
 const ArticleList = dynamic(() => import("@/app/components/features/articles/ArticleList"), { ssr: true })
 
@@ -18,16 +19,6 @@ export default async function Articles() {
           </div>
         )}
       </Suspense>
-    </div>
-  )
-}
-
-function ArticleListSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-      {[...Array(8)].map((_, i) => (
-        <div key={i} className="aspect-video bg-gray-200 rounded-lg" />
-      ))}
     </div>
   )
 }
