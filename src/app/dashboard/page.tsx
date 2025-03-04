@@ -50,7 +50,7 @@ export default async function BookmarksPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ブックマーク</h1>
+        <h1 className="text-2xl font-bold">ブックマーク一覧</h1>
       </div>
 
       <AddBookmarkForm session={session} />

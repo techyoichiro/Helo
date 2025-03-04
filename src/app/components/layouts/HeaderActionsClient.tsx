@@ -29,7 +29,7 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
       
       await signOut()
       
-      router.refresh()
+      router.push('/')
     } catch (error) {
       console.error('Error signing out:', error)
     }

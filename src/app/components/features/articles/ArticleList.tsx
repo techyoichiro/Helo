@@ -5,24 +5,10 @@ import { ArticleListProps } from "@/app/types/article";
 const ArticleList = async ({ items }: ArticleListProps) => {
   const supabase = await createClient();
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-red-500">ユーザー情報の取得中にエラーが発生しました。</p>
-      </div>
-    );
-  }
+  const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
 
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-red-500">セッションの取得中にエラーが発生しました。</p>
-      </div>
-    );
-  }
+  const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData.session;
 
   // エラーレスポンスのチェック
