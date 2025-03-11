@@ -9,7 +9,7 @@ export default async function Articles() {
   const items = await fetchTrendArticles()
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="w-full">
       <Suspense fallback={<ArticleListSkeleton />}>
         {Array.isArray(items) ? (
           <ArticleList items={items} />

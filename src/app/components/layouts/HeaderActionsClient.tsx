@@ -47,6 +47,10 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
     router.push('/dashboard/settings')
   }
 
+  const handleGuide = async () => {
+    router.push('/guide')
+  }
+
   const handleLoginSuccess = () => {
     setIsOpen(false)
     router.refresh()
@@ -79,7 +83,7 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
             <DropdownMenuItem onClick={handleProfile}>プロフィール</DropdownMenuItem>
             <DropdownMenuItem onClick={handleDashboard}>ブックマーク</DropdownMenuItem>
             <DropdownMenuItem onClick={handleSetting}>設定</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSetting}>サポートとヘルプ</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleGuide}>ガイドとヘルプ</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>ログアウト</DropdownMenuItem>
           </DropdownMenuContent>

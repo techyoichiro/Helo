@@ -26,7 +26,7 @@ const sidebarNavItems = [
   },
   {
     title: "ガイドとヘルプ",
-    href: "/dashboard/support",
+    href: "/guide",
     icon: <HelpCircle className="h-4 w-4" />,
   },
 ]
