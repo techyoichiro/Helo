@@ -117,10 +117,8 @@ const app = new Hono()
                 getQiitaTrendingPosts(),
               ]);
             const allPosts = [...zennPosts, ...qiitaPosts];
-
             // 日付順にソート (降順: 最新順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
-
             return c.json(sortedPosts);
         } catch (error) {
             console.error('Failed to fetch trendPosts:', error);
@@ -135,12 +133,9 @@ const app = new Hono()
                 getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`),
                 getQiitaLatestPosts(),
             ]);
-
             const allPosts = [...zennPosts, ...qiitaPosts];
-
             // 日付順にソート (降順: 最新順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
-            
             return c.json(sortedPosts);
         } catch (error) {
             console.error('Failed to fetch latest posts:', error);
@@ -153,7 +148,10 @@ const app = new Hono()
             const { topic } = c.req.valid('param')
             const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?topicname=${topic}`);
             const qiitaPosts = await getQiitaPostsByTags(topic);
-            return c.json([...zennPosts, ...qiitaPosts]);
+            const allPosts = [...zennPosts, ...qiitaPosts];
+            // 日付順にソート (降順: 最新順)
+            const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+            return c.json(sortedPosts);
         } catch (error) {
             console.error('Failed to fetch posts:', error);
             return c.json({ error: 'Failed to fetch posts' }, 500);

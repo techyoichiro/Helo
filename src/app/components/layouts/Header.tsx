@@ -23,12 +23,6 @@ export default async function Header() {
                 <Search className="h-5 w-5 text-gray-800"/>
               </Button>
             </Link>
-            {/* bookmarks */}
-            <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="hidden sm:flex">
-                <Bookmark className="h-5 w-5 text-gray-800"/>
-              </Button>
-            </Link>
             {/* Login */}
             <HeaderActionsServer />
           </div>

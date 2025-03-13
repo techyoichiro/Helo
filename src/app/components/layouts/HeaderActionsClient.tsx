@@ -12,11 +12,12 @@ import {
 } from "@/app/components/common/dropdown-menu"
 import { Button } from "../common/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar"
-import { LucideUser } from 'lucide-react'
+import { Bookmark, LucideUser } from 'lucide-react'
 import { LoginDialog } from "../common/LoginDialog"
 import { signOut } from '@/app/actions/auth'
 import { createClient } from '@/app/lib/supabase/client'
 import { HeaderActionsClientProps } from '@/app/types/user'
+import Link from "next/link"
 
 export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -63,31 +64,35 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
   return (
     <>
       {initialUser ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full ml-4">
-              <Avatar>
-                {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt="プロフィール" />
-                ) : (
-                  <AvatarFallback>
-                    <LucideUser className="h-6 w-6" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
-            <DropdownMenuLabel>{fullName || email}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleProfile}>プロフィール</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDashboard}>ブックマーク</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSetting}>設定</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleGuide}>ガイドとヘルプ</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>ログアウト</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <><Link href="/dashboard">
+          <Button variant="ghost" size="icon" className="hidden sm:flex">
+            <Bookmark className="h-5 w-5 text-gray-800" />
+          </Button>
+        </Link><DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full ml-4">
+                <Avatar>
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt="プロフィール" />
+                  ) : (
+                    <AvatarFallback>
+                      <LucideUser className="h-6 w-6" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel>{fullName || email}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleProfile}>プロフィール</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDashboard}>ブックマーク</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSetting}>設定</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleGuide}>ガイドとヘルプ</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>ログアウト</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu></>
       ) : (
         <>
           <Button onClick={() => setIsOpen(true)}>ログイン</Button>
