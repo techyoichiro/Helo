@@ -13,7 +13,7 @@ import {
 import { Button } from "../common/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar"
 import { Bookmark, LucideUser } from 'lucide-react'
-import { LoginDialog } from "../common/LoginDialog"
+import { LoginDialog } from "@/app/components/common/LoginDialog"
 import { signOut } from '@/app/actions/auth'
 import { createClient } from '@/app/lib/supabase/client'
 import { HeaderActionsClientProps } from '@/app/types/user'
