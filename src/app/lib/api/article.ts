@@ -40,7 +40,7 @@ export async function fetchTrendArticles() {
     return { error: 'Failed to fetch articles. Please try again later.' };
   }
 
-  return { error: 'An unexpected error occurred.' };
+  return { error: response.status };
 }
 
 export async function fetchLatestArticles() {
