@@ -19,6 +19,13 @@
         "coverImageUrl": "/images/how_os_works.jpg",
         "tags": ["OS", "コンピューター", "プログラミング"],
         "amazonLink": "https://amzn.to/42cp4ub"
+    },
+    {
+        "id": 4,
+        "title": "［作って学ぶ］ブラウザのしくみか",
+        "coverImageUrl": "/images/how_browser_works.jpg",
+        "tags": ["ブラウザ", "コンピューター", "プログラミング"],
+        "amazonLink": "https://amzn.to/4lue0Qo"
     }
   ]
   
