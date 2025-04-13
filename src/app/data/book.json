@@ -1,0 +1,24 @@
+[
+    {
+        "id": 1,
+        "title": "ネットワークはなぜつながるのか",
+        "coverImageUrl": "/images/how_networks_work.jpg",
+        "tags": ["ネットワーク", "コンピューター", "インターネット"],
+        "amazonLink": "https://amzn.to/4jwiBA2"
+    },
+    {
+        "id": 2,
+        "title": "プリンシプル オブ プログラミング3年目までに身につけたい一生役立つ101の原理原則",
+        "coverImageUrl": "/images/principe_of_programming.jpg",
+        "tags": ["プログラミング", "コンピューター", "プリンシプル"],
+        "amazonLink": "https://amzn.to/4jwiBA2"
+    },
+    {
+        "id": 3,
+        "title": "［作って学ぶ］OSのしくみ",
+        "coverImageUrl": "/images/how_os_works.jpg",
+        "tags": ["OS", "コンピューター", "プログラミング"],
+        "amazonLink": "https://amzn.to/42cp4ub"
+    }
+  ]
+  

@@ -4,6 +4,7 @@ import { PageSEO } from "@/app/components/layouts/PageSEO"
 import { Tabs } from "@/app/components/layouts/Tabs"
 import { config } from "@/app/site.config"
 import Articles from "@/app/articles/page"
+import BookList from "@/app/components/features/books/BookList"
 
 const tabItems = [
   { href: "/", title: "トレンド" },
@@ -26,6 +27,8 @@ export default async function Home() {
           <Tabs items={tabItems} className="mb-4" />
           {/* 記事一覧*/}
           <Articles />
+          {/* 書籍一覧 */}
+          <BookList />
         </ContentWrapper>
       </section>
     </div>
