@@ -245,6 +245,49 @@ const app = new Hono<{ Variables: Variables }>()
   }
 )
 
+/* ---------- フォルダーに紐づくブックマーク一覧 ---------- */
+.get("/folders/:folderId/bookmarks", authMiddleware, async (c) => {
+  /* --- ① ルートパラメータとユーザーID --- */
+  const folderId = Number(c.req.param("folderId"))     // 数値化（NaN なら 400 にしても良い）
+  const userId   = c.get("user").id                    // 認証ミドルウェアで注入済み
+
+  /* --- ② フォルダー所有者チェック（任意だが推奨） --- */
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(folders)
+    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+
+  if (count === 0) {
+    // 自分のフォルダーでなければ 404
+    return c.json({ error: "Folder not found" }, 404)
+  }
+
+  /* --- ③ ブックマーク取得（自身のデータだけ） --- */
+  const bookmarksInFolder = await db
+    .select({
+      id:          bookmarks.id,
+      title:       bookmarks.title,
+      articleUrl:  bookmarks.articleUrl,
+      ogImageUrl:  bookmarks.ogImageUrl,
+      createdAt:   bookmarks.createdAt,
+      publishedAt: bookmarks.publishedAt,
+    })
+    .from(bookmarks)
+    .innerJoin(
+      bookmarkFolders,
+      eq(bookmarks.id, bookmarkFolders.bookmarkId)
+    )
+    .where(
+      and(
+        eq(bookmarkFolders.folderId, folderId), // 指定フォルダー
+        eq(bookmarks.userId, userId)            // ★ 自分のブックマークのみ
+      )
+    )
+
+  /* --- ④ レスポンス --- */
+  return c.json(bookmarksInFolder)   // ← BookmarkDTO[] 相当
+})
+
 /* ---------- ブックマーク数 ---------- */
 .get("/count", authMiddleware, async (c) => {
   const userId = c.get("user").id

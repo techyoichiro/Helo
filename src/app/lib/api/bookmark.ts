@@ -203,6 +203,20 @@ export async function addBookmarkToFolder(
   }
 }
 
+// フォルダーに紐づくブックマーク一覧取得
+export async function fetchBookmarksByFolder(
+  session: { access_token: string },
+  folderId: number
+): Promise<ApiResponse<BookmarkDTO[]>> {
+  const res = await client.api.bookmark.folders[":folderId"].bookmarks.$get(
+    { param: { folderId: folderId.toString() } },
+    { headers: { Authorization: `Bearer ${session.access_token}` } }
+  )
+  if (!res.ok) return { error: "Failed to fetch" }
+  const data = (await res.json()) as BookmarkDTO[]
+  return { data }
+}
+
 
 
 // 以下、受け取った RawBookmark データをパースするためのヘルパー関数
