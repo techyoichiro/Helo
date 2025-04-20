@@ -1,23 +1,20 @@
-import { BookmarkCard } from '@/app/components/features/bookmarks/BookmarkCard'
+import { BookmarkCard } from "@/app/components/features/bookmarks/BookmarkCard"
 import { BookMarkListProps } from "@/app/types/bookmark"
 
-const BookMarkList = ({ items }: BookMarkListProps) => {
-  const totalItemsCount = items.length;
-  
-  if (totalItemsCount === 0) {
-    return <div className="py-20 text-center font-bold text-lg text-base-light">No posts yet</div>;
+export default function BookMarkList({ items, session }: BookMarkListProps) {
+  if (items.length === 0) {
+    return (
+      <div className="py-20 text-center font-bold text-lg text-base-light">
+        No posts yet
+      </div>
+    )
   }
 
   return (
-    <>
-      <div className="flex flex-wrap justify-between">
-        {items.map((item, i) => (
-          <BookmarkCard key={`post-item-${i}`} item={item} />
-        ))}
-      </div>
-    </>
-  );
-};
-
-export default BookMarkList;
-
+    <div className="flex flex-wrap justify-between">
+      {items.map((item) => (
+        <BookmarkCard key={item.id} item={item} session={session} />
+      ))}
+    </div>
+  )
+}

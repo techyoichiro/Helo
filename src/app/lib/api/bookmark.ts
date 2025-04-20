@@ -1,9 +1,9 @@
 import { client } from "@/app/lib/hono/hono"
-import { Bookmark, RawBookmark } from '@/app/types/bookmark'
+import { BookmarkDTO, FolderDTO, RawBookmark } from '@/app/types/bookmark'
 import { ApiResponse } from '@/app/types/common'
 
 // ブックマーク一覧の取得
-export async function fetchBookmarks(session: { access_token: string }): Promise<ApiResponse<Bookmark[]>> {
+export async function fetchBookmarks(session: { access_token: string }): Promise<ApiResponse<BookmarkDTO[]>> {
   try {
     const response = await client.api.bookmark.$get(undefined, {
       headers: {
@@ -38,7 +38,7 @@ export async function fetchBookmarks(session: { access_token: string }): Promise
 export async function addBookmark(
   session: { access_token: string },
   payload: { title: string; articleUrl: string; ogImageUrl: string; publishedAt: string }
-): Promise<ApiResponse<Bookmark>> {
+): Promise<ApiResponse<BookmarkDTO>> {
   try {
     const response = await client.api.bookmark.$post({
       json: {
@@ -125,18 +125,96 @@ export async function fetchBookmarkCount(session: { access_token: string }): Pro
   }
 }
 
-//
+// フォルダ一覧取得
+export async function fetchFolders(session: { access_token: string }): Promise<ApiResponse<FolderDTO[]>> {
+  try {
+    const response = await client.api.bookmark.folders.$get(undefined, {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('フォルダ一覧の取得に失敗しました:', errorData)
+      return { error: 'Failed to fetch folders' }
+    }
+
+    const data: FolderDTO[] = await response.json()
+    return { data: data }
+  } catch (error) {
+    console.error('フォルダ一覧の取得中にエラーが発生しました:', error)
+    return { error: 'Error fetching folders' }
+  }
+}
+
+// フォルダ作成
+export async function addFolder(
+  session: { access_token: string },
+  payload: { name: string }
+): Promise<ApiResponse<FolderDTO>> {
+  try {
+    const response = await client.api.bookmark.folders.$post(
+      { json: { name: payload.name } },
+      { headers: { Authorization: `Bearer ${session.access_token}` } }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("フォルダの追加に失敗しました:", errorData)
+      return { error: "Failed to add folder" }
+    }
+
+    const folder = (await response.json()) as FolderDTO
+    return { data: folder }
+  } catch (error) {
+    console.error("フォルダの追加中にエラーが発生しました:", error)
+    return { error: "Error adding folder" }
+  }
+}
+
+// フォルダーにブックマーク追加
+export async function addBookmarkToFolder(
+  session: { access_token: string },
+  folderId: number,            // ← 追加
+  bookmarkId: number
+): Promise<ApiResponse<null>> {
+  try {
+    const response = await client.api.bookmark.folders[":folderId"].bookmarks.$post(
+      {
+        param: { folderId: folderId.toString() },
+        json:  { bookmarkId }
+      },
+      {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("フォルダーにブックマークの追加に失敗しました:", errorData)
+      return { error: "Failed to add bookmark to folder" }
+    }
+
+    return { data: null }
+  } catch (error) {
+    console.error("フォルダーにブックマークの追加中にエラーが発生しました:", error)
+    return { error: "Error adding bookmark to folder" }
+  }
+}
+
+
+
 // 以下、受け取った RawBookmark データをパースするためのヘルパー関数
 //
-const parseResponse = (data: RawBookmark[]): Bookmark[] => {
+const parseResponse = (data: RawBookmark[]): BookmarkDTO[] => {
   return data.map(item => parseSingle(item))
 }
 
 // 単体用
-const parseSingle = (item: RawBookmark): Bookmark => {
+const parseSingle = (item: RawBookmark): BookmarkDTO => {
   return {
     ...item,
-    createdAt: new Date(item.createdAt), 
-    publishedAt: item.publishedAt ? new Date(item.publishedAt) : null,
+    publishedAt: item.publishedAt ? new Date(item.publishedAt).toISOString() : null,
   }
 }

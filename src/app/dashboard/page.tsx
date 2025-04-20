@@ -60,7 +60,7 @@ export default async function BookmarksPage() {
           {!bookmarks ? (
             <p>読み込み中...</p>
           ) : bookmarks.length > 0 ? (
-            <BookMarkList items={bookmarks} />
+            <BookMarkList items={bookmarks} session={session} />
           ) : (
             <p className="text-center">ブックマークがありません。</p>
           )}
