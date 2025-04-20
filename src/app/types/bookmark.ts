@@ -47,9 +47,10 @@ export interface BookMarkListProps {
 }
 
 export interface BookmarkCardProps {
-  item: BookmarkDTO
-  session: SessionProp
-}
+    item:       BookmarkDTO
+    session:    SessionProp
+    folders:    FolderDTO[]
+  }
 
 export interface RawBookmark {
     id: number
