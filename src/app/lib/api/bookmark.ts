@@ -176,7 +176,7 @@ export async function addFolder(
 // フォルダーにブックマーク追加
 export async function addBookmarkToFolder(
   session: { access_token: string },
-  folderId: number,            // ← 追加
+  folderId: number,
   bookmarkId: number
 ): Promise<ApiResponse<null>> {
   try {
@@ -215,6 +215,61 @@ export async function fetchBookmarksByFolder(
   if (!res.ok) return { error: "Failed to fetch" }
   const data = (await res.json()) as BookmarkDTO[]
   return { data }
+}
+
+// フォルダ名変更
+export async function renameFolder(
+  session: { access_token: string },
+  folderId: number,
+  payload: { name: string }
+): Promise<ApiResponse<FolderDTO>> {
+  try {
+    const response = await client.api.bookmark.folders[":id"].$put(
+      { 
+        param: { id: folderId.toString() },
+        json:    { name: payload.name },
+      },
+      {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("フォルダ名の変更に失敗しました:", errorData) 
+      return { error: "Failed to update folder name" }
+    }
+
+    const data = (await response.json()) as FolderDTO
+    return { data }
+  } catch (error) {
+    console.error("フォルダ名の変更中にエラーが発生しました:", error)
+    return { error: "Error updating folder name" }
+  }
+}
+
+// フォルダ削除
+export async function deleteFolder(
+  session: { access_token: string },
+  folderId: number
+): Promise<ApiResponse<null>> {
+  try {
+    const response = await client.api.bookmark.folders[":id"].$delete(
+      { param: { id: folderId.toString() } },
+      { headers: { Authorization: `Bearer ${session.access_token}` } }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("フォルダの削除に失敗しました:", errorData)
+      return { error: "Failed to delete folder" }
+    }
+
+    return { data: null }
+  } catch (error) {
+    console.error("フォルダの削除中にエラーが発生しました:", error)
+    return { error: "Error deleting folder" }
+  }
 }
 
 

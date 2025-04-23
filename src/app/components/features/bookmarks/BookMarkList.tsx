@@ -1,4 +1,4 @@
-import { fetchFolders, fetchBookmarksByFolder } from "@/app/lib/api/bookmark"
+import { fetchFolders } from "@/app/lib/api/bookmark"
 import BookmarkListClient from "@/app/components/features/bookmarks/BookmarkListClient"
 import { BookMarkListProps } from "@/app/types/bookmark"
 

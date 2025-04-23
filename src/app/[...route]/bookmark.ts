@@ -1,8 +1,7 @@
 import { Hono } from "hono"
-import { createFactory } from "hono/factory"
 import { z } from "zod"
 import { zValidator } from "@hono/zod-validator"
-import { and, eq, sql, exists } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 
 import { db } from "@/server/db"
 import { bookmarks, folders, bookmarkFolders } from "@/server/db/schema"
@@ -28,10 +27,14 @@ const urlOnlySchema = z.object({
 })
 
 const paramSchema = z.object({
-  id: z.string(),
+  id: z.string().regex(/^\d+$/),
 })
 
 const folderSchema = z.object({
+  name: z.string().min(1).max(50),
+})
+
+const bodySchema = z.object({
   name: z.string().min(1).max(50),
 })
 
@@ -68,7 +71,7 @@ const app = new Hono<{ Variables: Variables }>()
     const [row] = await db
       .insert(bookmarks)
       .values({
-        userId:     user.id,
+        userId: user.id,
         title,
         articleUrl,
         ogImageUrl,
@@ -109,23 +112,16 @@ const app = new Hono<{ Variables: Variables }>()
   zValidator("json", folderSchema),
   async (c) => {
     const { name } = c.req.valid("json")
-    const user     = c.get("user")
+    const user = c.get("user")
     const subscribed = c.get("isSubscribed")
 
-    const existing = await db
-      .select()
-      .from(folders)
-      .where(eq(folders.userId, user.id))
+    const existing = await db.select().from(folders).where(eq(folders.userId, user.id))
 
     if (!subscribed && existing.length >= 3) {
       return c.json({ error: "Folder limit reached" }, 403)
     }
 
-    const [row] = await db
-      .insert(folders)
-      .values({ userId: user.id, name })
-      .returning()
-
+    const [row] = await db.insert(folders).values({ userId: user.id, name }).returning()
     return c.json(row, 201)
   }
 )
@@ -141,20 +137,16 @@ const app = new Hono<{ Variables: Variables }>()
 .post(
   "/folders/:folderId/bookmarks",
   authMiddleware,
-  zValidator(
-    "param",
-    z.object({ folderId: z.string().transform(Number) })
-  ),
+  zValidator("param", z.object({ folderId: z.string().regex(/^\d+$/) })),
   zValidator("json", z.object({ bookmarkId: z.number() })),
   async (c) => {
-    const { folderId }   = c.req.valid("param")
+    const { folderId } = c.req.valid("param")
     const { bookmarkId } = c.req.valid("json")
 
-    /* 重複チェック */
     const dup = await db
       .select()
       .from(bookmarkFolders)
-      .where(and(eq(bookmarkFolders.folderId, folderId), eq(bookmarkFolders.bookmarkId, bookmarkId)))
+      .where(and(eq(bookmarkFolders.folderId, Number(folderId)), eq(bookmarkFolders.bookmarkId, bookmarkId)))
 
     if (dup.length) {
       return c.json({ error: "Already added" }, 409)
@@ -162,7 +154,7 @@ const app = new Hono<{ Variables: Variables }>()
 
     const [link] = await db
       .insert(bookmarkFolders)
-      .values({ folderId, bookmarkId })
+      .values({ folderId: Number(folderId), bookmarkId })
       .returning()
 
     return c.json(link, 201)
@@ -176,20 +168,31 @@ const app = new Hono<{ Variables: Variables }>()
   subscriptionMiddleware,
   zValidator("param", paramSchema),
   async (c) => {
-    const { id } = c.req.valid("param")
-    const userId = c.get("user").id
+    const { id }   = c.req.valid("param")
+    const userId   = c.get("user").id
+    const folderId = Number(id)
 
-    const res = await db
-      .delete(folders)
-      .where(and(eq(folders.id, Number(id)), eq(folders.userId, userId)))
-      .returning({ deletedId: folders.id })
+    const result = await db.transaction(async (tx) => {
+      // 結合テーブルのリンクを先に削除
+      await tx
+        .delete(bookmarkFolders)
+        .where(and(eq(bookmarkFolders.folderId, folderId)))
 
-    if (!res.length) return c.json({ error: "Folder not found" }, 404)
-    return c.json({ deletedId: res[0].deletedId })
+      // フォルダ本体を削除
+      const [deleted] = await tx
+        .delete(folders)
+        .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+        .returning({ deletedId: folders.id })
+
+      return deleted
+    })
+
+    if (!result) return c.json({ error: "Folder not found" }, 404)
+    return c.json({ deletedId: result.deletedId })
   }
 )
 
-/* ---------- ブックマーク追加 (URL だけ) ---------- */
+/* ---------- ブックマーク追加 (URL のみ) ---------- */
 .post(
   "/url",
   authMiddleware,
@@ -198,15 +201,14 @@ const app = new Hono<{ Variables: Variables }>()
   async (c) => {
     try {
       const { url } = c.req.valid("json")
-      const user    = c.get("user")
+      const user = c.get("user")
 
-      /* 1) 仮登録 */
       const [inserted] = await db
         .insert(bookmarks)
         .values({ userId: user.id, articleUrl: url, title: "タイトル", ogImageUrl: null })
         .returning()
 
-      /* 2) 非同期で OGP 取得 & Storage アップロード */
+      // 非同期で OGP 取得＆アップロード
       setTimeout(async () => {
         try {
           const { title, ogImage } = await fetchOgp(url)
@@ -221,17 +223,11 @@ const app = new Hono<{ Variables: Variables }>()
 
           const supabase = await createClient()
           const fileName = `bookmark_${inserted.id}_${Date.now()}.jpg`
-          const { error: upErr } = await supabase
-            .storage
-            .from("bookmark_ogp")
-            .upload(fileName, new Blob([arrayBuffer]), { contentType: "image/jpeg" })
+          const { error: upErr } = await supabase.storage.from("bookmark_ogp").upload(fileName, new Blob([arrayBuffer]), { contentType: "image/jpeg" })
           if (upErr) return
 
           const { data: pub } = supabase.storage.from("bookmark_ogp").getPublicUrl(fileName)
-          await db
-            .update(bookmarks)
-            .set({ title, ogImageUrl: pub?.publicUrl ?? null })
-            .where(eq(bookmarks.id, inserted.id))
+          await db.update(bookmarks).set({ title, ogImageUrl: pub?.publicUrl ?? null }).where(eq(bookmarks.id, inserted.id))
         } catch (err) {
           console.error("OGP fetch/upload failed:", err)
         }
@@ -245,24 +241,18 @@ const app = new Hono<{ Variables: Variables }>()
   }
 )
 
-/* ---------- フォルダーに紐づくブックマーク一覧 ---------- */
+/* ---------- フォルダー配下ブックマーク一覧 ---------- */
 .get("/folders/:folderId/bookmarks", authMiddleware, async (c) => {
-  /* --- ① ルートパラメータとユーザーID --- */
-  const folderId = Number(c.req.param("folderId"))     // 数値化（NaN なら 400 にしても良い）
-  const userId   = c.get("user").id                    // 認証ミドルウェアで注入済み
+  const folderId = Number(c.req.param("folderId"))
+  const userId = c.get("user").id
 
-  /* --- ② フォルダー所有者チェック（任意だが推奨） --- */
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(folders)
     .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
 
-  if (count === 0) {
-    // 自分のフォルダーでなければ 404
-    return c.json({ error: "Folder not found" }, 404)
-  }
+  if (count === 0) return c.json({ error: "Folder not found" }, 404)
 
-  /* --- ③ ブックマーク取得（自身のデータだけ） --- */
   const bookmarksInFolder = await db
     .select({
       id:          bookmarks.id,
@@ -273,19 +263,10 @@ const app = new Hono<{ Variables: Variables }>()
       publishedAt: bookmarks.publishedAt,
     })
     .from(bookmarks)
-    .innerJoin(
-      bookmarkFolders,
-      eq(bookmarks.id, bookmarkFolders.bookmarkId)
-    )
-    .where(
-      and(
-        eq(bookmarkFolders.folderId, folderId), // 指定フォルダー
-        eq(bookmarks.userId, userId)            // ★ 自分のブックマークのみ
-      )
-    )
+    .innerJoin(bookmarkFolders, eq(bookmarks.id, bookmarkFolders.bookmarkId))
+    .where(and(eq(bookmarkFolders.folderId, folderId), eq(bookmarks.userId, userId)))
 
-  /* --- ④ レスポンス --- */
-  return c.json(bookmarksInFolder)   // ← BookmarkDTO[] 相当
+  return c.json(bookmarksInFolder)
 })
 
 /* ---------- ブックマーク数 ---------- */
@@ -298,5 +279,28 @@ const app = new Hono<{ Variables: Variables }>()
 
   return c.json({ count })
 })
+
+/* ---------- フォルダ名変更 ---------- */
+.put(
+    "/folders/:id",
+    authMiddleware,
+    zValidator("param", paramSchema),
+    zValidator("json",  bodySchema),
+    async (c) => {
+      const { id }  = c.req.valid("param")
+      const { name } = c.req.valid("json")
+      const folderId = Number(id)
+      const userId   = c.get("user").id
+  
+      const [updated] = await db
+        .update(folders)
+        .set({ name, updatedAt: new Date() })
+        .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+        .returning({ id: folders.id, name: folders.name })
+  
+      if (!updated) return c.json({ error: "Folder not found" }, 404)
+      return c.json(updated)
+    }
+  )
 
 export default app
