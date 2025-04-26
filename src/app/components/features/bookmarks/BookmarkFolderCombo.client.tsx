@@ -24,18 +24,17 @@ export default function BookmarkFolderCombo({
 
   /* ───────── 選択ハンドラ ───────── */
   const handleSelect = (f: FolderDTO) => {
-    onSelect(f.id === 0 ? null : f) // id=0 は null 扱い
+    onSelect(f.id === 0 ? null : f)
   }
 
   /* フォルダ削除で value が存在しなくなったときは “すべて” にフォールバック */
-  const isValid =
-    value && folders.some((f) => f.id === value.id) ? true : false
-  const keyForReset = value ? String(value.id) : "all"
+  const keyForReset = value ? "keep" : "reset"
 
   return (
     <FolderCombo
       key={keyForReset}
       folders={comboFolders}
+      initial={value ?? undefined}
       onSelect={handleSelect}
       placeholder="フォルダーで絞り込み"
     />
