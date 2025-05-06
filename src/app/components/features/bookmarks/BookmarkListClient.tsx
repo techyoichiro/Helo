@@ -1,177 +1,94 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import BookmarkCard from "@/app/components/features/bookmarks/BookmarkCard"
-import {
-  FolderDTO,
-  BookmarkDTO,
-  SessionProp,
-} from "@/app/types/bookmark"
-import { fetchBookmarksByFolder, renameFolder, deleteFolder } from "@/app/lib/api/bookmark"
-import BookmarkFolderCombo from "@/app/components/features/bookmarks/BookmarkFolderCombo.client"
-import { Button } from "@/app/components/common/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "@/app/components/common/dialog"
-import { Input } from "@/app/components/common/input"
+import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import { BookmarkDTO, FolderDTO, SessionProp } from '@/app/types/bookmark'
+import { fetchBookmarks, fetchBookmarksByFolder, fetchFolders } from '@/app/lib/api/bookmark'
+import BookmarkCard from './BookmarkCard'
 
-interface Props {
-  initialItems: BookmarkDTO[]
-  folders: FolderDTO[]
+const FolderActions = dynamic(() => import('./FolderActions'), { ssr: false })
+
+interface BookmarkListClientProps {
   session: SessionProp
+  initialItems: BookmarkDTO[]
 }
 
 export default function BookmarkListClient({
-  initialItems,
-  folders,
   session,
-}: Props) {
-  const [items, setItems] = useState<BookmarkDTO[]>(initialItems)
+  initialItems,
+}: BookmarkListClientProps) {
   const [selected, setSelected] = useState<FolderDTO | null>(null)
-  const [folderList, setFolderList] = useState<FolderDTO[]>(folders)
+  const [bookmarks, setBookmarks] = useState<BookmarkDTO[]>(initialItems)
+  const [folderList, setFolderList] = useState<FolderDTO[]>([])
+  const [loading, setLoading] = useState(true)
 
-  /* --- モーダル制御用 state --- */
-  const [renameOpen, setRenameOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [newName, setNewName] = useState("")
-
-  /* フォルダーが切り替わったら取得し直す */
   useEffect(() => {
-    if (!selected) {
-      setItems(initialItems) // 「すべて」
-    } else {
-      ;(async () => {
-        const res = await fetchBookmarksByFolder(session, selected.id)
-        if (res.data) setItems(res.data)
-      })()
+    const loadFolders = async () => {
+      const { data: folders = [] } = await fetchFolders(session)
+      setFolderList(folders)
     }
-  }, [selected, initialItems, session])
+    loadFolders()
+  }, [session])
 
-  /* --- ここでは API 叩かずに TODO として stub --- */
-  const handleRename = async () => {
-    if (!selected) return
-    const { error } = await renameFolder(session, selected.id, newName)
-    if (error) return
-    /* 更新後の処理 */
-    // ローカル配列の名称を更新
-    setFolderList((prev) =>
-      prev.map((f) => (f.id === selected.id ? { ...f, name: newName } : f))
-    )
-    setRenameOpen(false)
-  }
+  useEffect(() => {
+    const fetchBookmarksData = async () => {
+      setLoading(true)
+      let result
+      if (selected) {
+        result = await fetchBookmarksByFolder(session, selected.id)
+      } else {
+        result = await fetchBookmarks(session)
+      }
+      if (result.error) return
+      setBookmarks(result.data ?? [])
+      setLoading(false)
+    }
 
-  const handleDelete = async () => {
-    if (!selected) return
-    const { error } = await deleteFolder(session, selected.id)
-    if (error) return
-    /* 更新後の処理 */
-    // フォルダ配列から取り除く
-    setFolderList((prev) => prev.filter((f) => f.id !== selected.id))
-    setDeleteOpen(false)
-    setSelected(null)
-  }
+    fetchBookmarksData()
+  }, [session, selected])
 
   return (
-    <>
-      {/* -------- フォルダ選択 & アクションボタン -------- */}
-      <div className="mb-4 flex items-center justify-between">
-        {/* 左側：コンボボックス */}
-        <BookmarkFolderCombo folders={folderList} value={selected} onSelect={setSelected} />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <select
+          value={selected?.id ?? ''}
+          onChange={(e) => {
+            const folder = folderList.find((f) => f.id === Number(e.target.value))
+            setSelected(folder ?? null)
+          }}
+          className="rounded-md border px-3 py-2"
+        >
+          <option value="">すべてのブックマーク</option>
+          {folderList.map((folder) => (
+            <option key={folder.id} value={folder.id}>
+              {folder.name}
+            </option>
+          ))}
+        </select>
 
-        {/* 右側：ボタン */}
-        <div className="flex items-center gap-2">
-            <Button
-            variant="outline"
-            size="sm"
-            disabled={!selected}
-            onClick={() => {
-                setNewName(selected?.name ?? "")
-                setRenameOpen(true)
-            }}
-            >
-            フォルダ名変更
-            </Button>
-            <Button
-            variant="destructive"
-            size="sm"
-            disabled={!selected}
-            onClick={() => setDeleteOpen(true)}
-            >
-            フォルダ削除
-            </Button>
-        </div>
+        <FolderActions
+          selected={selected}
+          folderList={folderList}
+          setFolderList={setFolderList}
+          setSelected={setSelected}
+          session={session}
+        />
       </div>
 
-      {/* -------- ブックマーク一覧 -------- */}
-      {items.length === 0 ? (
-        <div className="py-20 text-center font-bold text-lg text-base-light">
-          ブックマークがありません
-        </div>
+      {loading ? (
+        <div>読み込み中…</div>
       ) : (
-        <div className="flex flex-wrap justify-between">
-          {items.map((bk) => (
+        <div className="space-y-4">
+          {bookmarks.map((bookmark) => (
             <BookmarkCard
-              key={bk.id}
-              item={bk}
+              key={bookmark.id}
+              item={bookmark}
               session={session}
-              folders={folders}
+              folders={folderList}
             />
           ))}
         </div>
       )}
-
-      {/* ===== フォルダ名変更モーダル ===== */}
-      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>フォルダ名を変更</DialogTitle>
-            <DialogDescription>
-              新しいフォルダ名を入力してください
-            </DialogDescription>
-          </DialogHeader>
-
-          <Input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="フォルダ名"
-          />
-
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setRenameOpen(false)}>
-              キャンセル
-            </Button>
-            <Button onClick={handleRename} disabled={newName.trim() === ""}>
-              保存
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ===== フォルダ削除モーダル ===== */}
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>削除しますか？</DialogTitle>
-            <DialogDescription>
-              このフォルダを完全に削除します。
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
-              キャンセル
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              削除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    </div>
   )
 }

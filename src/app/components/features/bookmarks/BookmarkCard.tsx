@@ -5,7 +5,12 @@ import dynamic from "next/dynamic"
 import { useCallback } from "react"
 import { BookmarkCardProps } from "@/app/types/bookmark"
 
-const ActionMenu = dynamic(() => import("./ActionMenu"), { ssr: false })
+const ActionMenu = dynamic(() => import("./ActionMenu"), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+  )
+})
 
 function favicon(host: string) {
   return `https://www.google.com/s2/favicons?sz=32&domain_url=${host}`

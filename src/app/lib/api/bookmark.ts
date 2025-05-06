@@ -18,6 +18,7 @@ const toDTO = (r: RawBookmarkRow): BookmarkDTO => ({
   articleUrl:  r.article_url,
   ogImageUrl:  r.og_image_url,
   publishedAt: r.published_at ?? null,
+  createdAt: r.created_at
 })
 const toDTOs = (rows: RawBookmarkRow[]) => rows.map(toDTO)
 

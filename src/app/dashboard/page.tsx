@@ -1,8 +1,11 @@
-// src/app/dashboard/bookmarks/page.tsx
-import BookMarkList     from '@/app/components/features/bookmarks/BookMarkList'
-import AddBookmarkForm  from '@/app/components/features/bookmarks/AddBookmarkForm'
+import dynamic from 'next/dynamic'
 import { fetchBookmarks } from '@/app/lib/api/bookmark'
 import { createClient }   from '@/app/lib/supabase/server'
+import AddBookmarkForm from '@/app/components/features/bookmarks/AddBookmarkForm'
+
+const BookMarkList = dynamic(() => import('@/app/components/features/bookmarks/BookMarkList'), {
+  loading: () => <p>読み込み中...</p>
+})
 
 export default async function BookmarksPage() {
   /* ────────── Supabase (Server) ────────── */

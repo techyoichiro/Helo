@@ -7,10 +7,10 @@ import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/article';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar";
 import { fetchArticlesByTopic } from "@/app/lib/api/article";
 
-export default async function TopicArticlesPage(props: unknown) {
-  const { params, searchParams } = props as TopicArticlesPageProps;
-  const { id: topic } = params;
-  const { name, logo } = searchParams;
+export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
+  const topic = params.id;
+  const name = searchParams.name;
+  const logo = searchParams.logo;
   const articlesOrError = await fetchArticlesByTopic(topic);
 
   if (isErrorResponse(articlesOrError)) {

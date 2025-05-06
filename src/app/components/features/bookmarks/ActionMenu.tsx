@@ -42,7 +42,7 @@ export default function ActionMenu({
   }
 
   const handleCreateFolder = async () => {
-    const res = await addFolder(session, { name: newFolderName })
+    const res = await addFolder(session, newFolderName)
     if (res.error) return console.error(res.error)
 
     if (res.data) {
