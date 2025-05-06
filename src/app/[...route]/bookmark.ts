@@ -14,11 +14,11 @@ const bookmarkSchema = z.object({
   articleUrl:  z.string().url(),
   ogImageUrl:  z.string().url().optional(),
   publishedAt: z.string().refine((s) => !isNaN(Date.parse(s))),
-  folderId:    z.number().int().positive(),
+  folderId:    z.number().int().positive().nullable(),
 })
 const urlOnlySchema = z.object({
   url:      z.string().url(),
-  folderId: z.number().int().positive().optional(),
+  folderId: z.number().int().positive().nullable().optional(),
 })
 const paramSchema   = z.object({ id: z.string().regex(/^\d+$/) })
 const folderSchema  = z.object({ name: z.string().min(1).max(50) })
@@ -211,7 +211,6 @@ const app = new Hono<{
 .post(
   '/url',
   authMiddleware,
-  // subscriptionMiddleware,
   zValidator('json', urlOnlySchema),
   async (c) => {
     const supabase = c.get('supabase')
@@ -220,10 +219,15 @@ const app = new Hono<{
 
     const { data: inserted, error } = await supabase
       .from('bookmarks')
-      .insert([{ user_id: user.id, folder_id: folderId ?? null, article_url: url, title: 'タイトル' }])
+      .insert([{ 
+        user_id: user.id, 
+        folder_id: folderId ?? null, 
+        article_url: url, 
+        title: 'タイトル' 
+      }])
       .select()
       .single()
-      console.log(user.id)
+    console.log(user.id)
     if (error) return c.json({ error: error.message }, 500)
 
     /* OGP 取得を非同期で */

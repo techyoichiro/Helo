@@ -53,7 +53,7 @@ export default function ArticleCard({
         articleUrl: url,
         ogImageUrl: og_image_url ?? "",
         publishedAt: published_at,
-        folderId: 0,
+        folderId: null,
       })
 
       if (response.error) {

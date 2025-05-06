@@ -28,6 +28,7 @@ export interface BookmarkDTO {
   ogImageUrl: string | null
   publishedAt: string | null
   createdAt: string
+  folderId?: number | null
 }
 
 export interface FolderDTO {
@@ -42,6 +43,8 @@ export interface BookmarkCardProps {
   item: BookmarkDTO
   session: SessionProp
   folders: FolderDTO[]
+  onBookmarkUpdate?: () => Promise<void>
+  onBookmarkRemove?: (bookmarkId: number) => void
 }
 
 export interface BookMarkListProps {
@@ -62,6 +65,13 @@ export interface BookmarkListClientProps {
   folderList: FolderDTO[]
   setFolderList: (folders: FolderDTO[]) => void
   initialItems: BookmarkDTO[]
+}
+
+export interface ActionMenuProps {
+  bookmarkId: number
+  session: SessionProp
+  folders: FolderDTO[]
+  onBookmarkUpdate?: () => Promise<void>
 }
 
 /* ──────────────────────────────

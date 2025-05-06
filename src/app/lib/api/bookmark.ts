@@ -45,7 +45,7 @@ export async function fetchBookmarks(
 ================================================================ */
 export async function addBookmark(
   session: { access_token: string },
-  payload: { title: string; articleUrl: string; ogImageUrl: string; publishedAt: string; folderId: number },
+  payload: { title: string; articleUrl: string; ogImageUrl: string; publishedAt: string; folderId: number | null },
 ): Promise<ApiResponse<BookmarkDTO>> {
   try {
     const res = await client.api.bookmark.$post(
@@ -173,18 +173,30 @@ export async function deleteFolder(
 ================================================================ */
 export async function fetchBookmarksByFolder(
   session: { access_token: string },
-  folderId: number,
+  folderId: number | null,
 ): Promise<ApiResponse<BookmarkDTO[]>> {
-  const res = await client.api.bookmark.folders[':folderId'].bookmarks.$get(
-    { param: { folderId: folderId.toString() } },
-    auth(session.access_token),
-  )
-  if (!res.ok) return fail(res)
-
-  /* data は [{ bookmarks: RawBookmarkRow[] }] 構造 */
-  const rows = (await res.json()) as RawBookmarkRow[]
-
-  return { data: toDTOs(rows) }
+  try {
+    let res: Response
+    if (folderId === null) {
+      // 未分類のブックマークを取得（folder_id が null のもの）
+      res = await client.api.bookmark.$get(undefined, auth(session.access_token))
+      if (!res.ok) return fail(res)
+      const rows = (await res.json()) as RawBookmarkRow[]
+      return { data: toDTOs(rows.filter(row => row.folder_id === null)) }
+    } else {
+      // 特定のフォルダのブックマークを取得
+      res = await client.api.bookmark.folders[':folderId'].bookmarks.$get(
+        { param: { folderId: folderId.toString() } },
+        auth(session.access_token),
+      )
+      if (!res.ok) return fail(res)
+      const rows = (await res.json()) as RawBookmarkRow[]
+      return { data: toDTOs(rows) }
+    }
+  } catch (err) {
+    console.error(err)
+    return { error: 'ブックマークの取得に失敗しました' }
+  }
 }
 
 export async function addBookmarkToFolder(

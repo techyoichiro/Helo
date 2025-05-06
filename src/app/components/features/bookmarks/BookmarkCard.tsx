@@ -4,6 +4,7 @@ import Image from "next/image"
 import dynamic from "next/dynamic"
 import { useCallback } from "react"
 import { BookmarkCardProps } from "@/app/types/bookmark"
+import { addBookmarkToFolder } from "@/app/lib/api/bookmark"
 
 const ActionMenu = dynamic(() => import("./ActionMenu"), { 
   ssr: false,
@@ -20,6 +21,7 @@ export default function BookmarkCard({
   item,
   session,
   folders,
+  onBookmarkUpdate,
 }: BookmarkCardProps) {
   const { title, articleUrl, ogImageUrl } = item
   const { hostname, origin } = new URL(articleUrl)
@@ -29,6 +31,11 @@ export default function BookmarkCard({
     () => window.open(articleUrl, "_blank", "noopener,noreferrer"),
     [articleUrl]
   )
+
+  const handleAddToFolder = async (folderId: number) => {
+    await addBookmarkToFolder(session, folderId, item.id)
+    onBookmarkUpdate?.()
+  }
 
   return (
     <article
@@ -77,6 +84,7 @@ export default function BookmarkCard({
             bookmarkId={item.id}
             session={session}
             folders={folders}
+            onBookmarkUpdate={onBookmarkUpdate}
           />
         </div>
       </div>
