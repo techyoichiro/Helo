@@ -65,7 +65,7 @@ export async function addBookmark(
 ================================================================ */
 export async function deleteBookmark(
   session: { access_token: string },
-  bookmarkId: number,
+  bookmarkId: string,
 ): Promise<ApiResponse<null>> {
   try {
     const res = await client.api.bookmark[':id'].$delete(
