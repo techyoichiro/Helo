@@ -64,7 +64,7 @@ export interface IconRecord {
 
 export interface TopicArticlesPageProps {
     params: Promise<{ id: string }>;
-    searchParams: { page?: string; name?: string; logo?: string };
+    searchParams: Promise<{ page?: string; name?: string; logo?: string }>;
 }
 
 export interface TopicCardProps {

@@ -9,9 +9,10 @@ import { fetchArticlesByTopic } from "@/app/lib/api/article";
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const topic = resolvedParams.id;
-  const name = searchParams.name;
-  const logo = searchParams.logo;
+  const name = resolvedSearchParams.name;
+  const logo = resolvedSearchParams.logo;
   const articlesOrError = await fetchArticlesByTopic(topic);
 
   if (isErrorResponse(articlesOrError)) {
