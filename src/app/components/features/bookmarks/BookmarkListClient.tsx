@@ -22,23 +22,15 @@ export default function BookmarkListClient({
   const [bookmarks, setBookmarks] = useState<BookmarkDTO[]>(initialItems)
   const [folderList, setFolderList] = useState<FolderDTO[]>([])
   const [loading, setLoading] = useState(false)
-  const [cache, setCache] = useState<Record<string, BookmarkDTO[]>>({
-    '': initialItems // 初期データをキャッシュ
-  })
-
-  // キャッシュキーを生成
-  const getCacheKey = useCallback((folderId: number | null, mode: 'all' | 'unclassified') => {
-    if (folderId) return folderId.toString()
-    return mode
-  }, [])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [total, setTotal] = useState(0)
+  const PER_PAGE = 12
 
   const refreshBookmarks = useCallback(async (force = false) => {
-    const cacheKey = getCacheKey(selected?.id ?? null, viewMode)
-    
-    // キャッシュがある場合はそれを使用（強制更新でない場合）
-    if (!force && cache[cacheKey]) {
-      setBookmarks(cache[cacheKey])
-      return
+    if (force) {
+      setPage(1)
+      setBookmarks([])
     }
 
     setLoading(true)
@@ -46,13 +38,13 @@ export default function BookmarkListClient({
       let result
       if (selected) {
         // 特定のフォルダーのブックマークを取得
-        result = await fetchBookmarksByFolder(session, selected.id)
+        result = await fetchBookmarksByFolder(session, selected.id, page, PER_PAGE)
       } else if (viewMode === 'unclassified') {
         // 未分類のブックマークを取得
-        result = await fetchBookmarksByFolder(session, null)
+        result = await fetchBookmarksByFolder(session, null, page, PER_PAGE)
       } else {
         // すべてのブックマークを取得
-        result = await fetchBookmarks(session)
+        result = await fetchBookmarks(session, page, PER_PAGE)
       }
       
       if (result.error) {
@@ -60,31 +52,44 @@ export default function BookmarkListClient({
         return
       }
 
-      const newBookmarks = result.data ?? []
-      setBookmarks(newBookmarks)
-      
-      // キャッシュを更新
-      setCache(prev => ({
-        ...prev,
-        [cacheKey]: newBookmarks
-      }))
+      if (result.data) {
+        const { bookmarks: newBookmarks, total: totalCount } = result.data
+        setTotal(totalCount)
+        
+        setBookmarks(prev => {
+          const updatedBookmarks = force ? newBookmarks : [...prev, ...newBookmarks]
+          setHasMore(updatedBookmarks.length < totalCount)
+          return updatedBookmarks
+        })
+      }
     } finally {
       setLoading(false)
     }
-  }, [session, selected, viewMode, cache, getCacheKey])
+  }, [session, selected, viewMode, page])
+
+  // スクロール検出
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || !hasMore) return
+
+      const scrollHeight = document.documentElement.scrollHeight
+      const scrollTop = window.scrollY
+      const clientHeight = document.documentElement.clientHeight
+
+      // スクロール位置が下部の20%以内になったら次のページを読み込む
+      if (scrollHeight - scrollTop - clientHeight < scrollHeight * 0.2) {
+        setPage(prev => prev + 1)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [loading, hasMore])
 
   // ブックマークの楽観的削除
   const removeBookmark = useCallback((bookmarkId: number) => {
     setBookmarks(prev => prev.filter(b => b.id !== bookmarkId))
-    
-    // キャッシュも更新
-    setCache(prev => {
-      const newCache = { ...prev }
-      Object.keys(newCache).forEach(key => {
-        newCache[key] = newCache[key].filter(b => b.id !== bookmarkId)
-      })
-      return newCache
-    })
+    setTotal(prev => prev - 1)
   }, [])
 
   useEffect(() => {
@@ -95,9 +100,17 @@ export default function BookmarkListClient({
     loadFolders()
   }, [session])
 
+  // 初期表示時と依存関係が変更された時にのみ実行
   useEffect(() => {
-    refreshBookmarks()
-  }, [session, selected, viewMode, refreshBookmarks])
+    refreshBookmarks(true)
+  }, [session, selected, viewMode])
+
+  // ページ変更時は追加読み込み
+  useEffect(() => {
+    if (page > 1) {
+      refreshBookmarks(false)
+    }
+  }, [page, refreshBookmarks])
 
   return (
     <div className="space-y-4">
@@ -109,13 +122,19 @@ export default function BookmarkListClient({
             if (value === 'all') {
               setSelected(null)
               setViewMode('all')
+              setPage(1)
+              setBookmarks([])
             } else if (value === 'unclassified') {
               setSelected(null)
               setViewMode('unclassified')
+              setPage(1)
+              setBookmarks([])
             } else {
               const folder = folderList.find((f) => f.id === Number(value))
               setSelected(folder ?? null)
               setViewMode('all')
+              setPage(1)
+              setBookmarks([])
             }
           }}
           className="rounded-md border px-3 py-2"
@@ -140,22 +159,28 @@ export default function BookmarkListClient({
         />
       </div>
 
-      {loading ? (
-        <div>読み込み中…</div>
-      ) : (
-        <div className="space-y-4">
-          {bookmarks.map((bookmark) => (
-            <BookmarkCard
-              key={bookmark.id}
-              item={bookmark}
-              session={session}
-              folders={folderList}
-              onBookmarkUpdate={() => refreshBookmarks(true)}
-              onBookmarkRemove={removeBookmark}
-            />
-          ))}
-        </div>
-      )}
+      <div className="space-y-4">
+        {bookmarks.map((bookmark) => (
+          <BookmarkCard
+            key={bookmark.id}
+            item={bookmark}
+            session={session}
+            folders={folderList}
+            onBookmarkUpdate={() => refreshBookmarks(true)}
+            onBookmarkRemove={removeBookmark}
+          />
+        ))}
+        {loading && (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          </div>
+        )}
+        {!loading && !hasMore && bookmarks.length > 0 && (
+          <div className="text-center text-gray-500 py-4">
+            すべてのブックマークを表示しました
+          </div>
+        )}
+      </div>
     </div>
   )
 }

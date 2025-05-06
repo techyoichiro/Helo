@@ -19,7 +19,7 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
     console.error(articlesOrError.error);
     notFound();
   }
-  const articles = articlesOrError;
+  const articles = articlesOrError.articles;
 
   return (
     <>

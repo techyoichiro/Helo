@@ -18,6 +18,26 @@ export interface ApiResponse<T> {
   error?: string
 }
 
+export interface BookmarkResponse {
+  bookmarks: {
+    id: number
+    title: string
+    article_url: string
+    og_image_url: string | null
+    published_at: string | null
+    created_at: string
+    folder_id: number | null
+    user_id: string
+  }[]
+  total: number
+}
+
+export interface BookmarkQuery {
+  page?: string
+  perPage?: string
+  unclassified?: string
+}
+
 /* ──────────────────────────────
    3.  DTO 型
 ──────────────────────────────── */
@@ -92,7 +112,7 @@ export interface RawBookmark {
 export interface RawBookmarkRow {
   id: number
   user_id: string
-  folder_id: number
+  folder_id: number | null
   title: string
   article_url: string
   og_image_url: string | null

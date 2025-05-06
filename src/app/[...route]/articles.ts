@@ -39,13 +39,22 @@ const fetchQiitaPosts = async (url: string): Promise<Article[]> => {
             throw new Error('Unexpected Qiita API response format');
         }
 
-        return Promise.all(json.map(async (item: QiitaItem) => ({
-            topics: item.tags.map(tag => tag.name),
-            title: item.title,
-            published_at: item.created_at,
-            url: item.url,
-            og_image_url: await getOgImageUrl(item.url)
-        })));
+        return Promise.all(json.map(async (item: QiitaItem) => {
+            let og_image_url;
+            try {
+                og_image_url = await getOgImageUrl(item.url);
+            } catch (err) {
+                console.error('Failed to fetch OG image:', err);
+                og_image_url = undefined;
+            }
+            return {
+                topics: item.tags.map(tag => tag.name),
+                title: item.title,
+                published_at: item.created_at,
+                url: item.url,
+                og_image_url
+            };
+        }));
     } catch (err) {
         console.error('Error fetching Qiita posts:', err);
         throw err;

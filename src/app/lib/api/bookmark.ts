@@ -4,6 +4,8 @@ import type {
   BookmarkDTO,
   FolderDTO,
   RawBookmarkRow,
+  BookmarkResponse,
+  BookmarkQuery,
 } from '@/app/types/bookmark'
 
 /* ──────────────── 共通ヘッダ ──────────────── */
@@ -27,13 +29,27 @@ const toDTOs = (rows: RawBookmarkRow[]) => rows.map(toDTO)
 ================================================================ */
 export async function fetchBookmarks(
   session: { access_token: string },
-): Promise<ApiResponse<BookmarkDTO[]>> {
+  page: number = 1,
+  perPage: number = 12,
+): Promise<ApiResponse<{ bookmarks: BookmarkDTO[], total: number }>> {
   try {
-    const res = await client.api.bookmark.$get(undefined, auth(session.access_token))
+    const query: BookmarkQuery = {
+      page: page.toString(),
+      perPage: perPage.toString()
+    }
+    const res = await client.api.bookmark.$get(
+      { query },
+      auth(session.access_token)
+    )
     if (!res.ok) return fail(res)
 
-    const rows = (await res.json()) as RawBookmarkRow[]
-    return { data: toDTOs(rows) }
+    const data = await res.json() as BookmarkResponse
+    return { 
+      data: {
+        bookmarks: toDTOs(data.bookmarks),
+        total: data.total
+      }
+    }
   } catch (err) {
     console.error(err)
     return { error: 'ブックマークの取得に失敗しました' }
@@ -174,24 +190,44 @@ export async function deleteFolder(
 export async function fetchBookmarksByFolder(
   session: { access_token: string },
   folderId: number | null,
-): Promise<ApiResponse<BookmarkDTO[]>> {
+  page: number = 1,
+  perPage: number = 12,
+): Promise<ApiResponse<{ bookmarks: BookmarkDTO[], total: number }>> {
   try {
     let res: Response
     if (folderId === null) {
       // 未分類のブックマークを取得（folder_id が null のもの）
-      res = await client.api.bookmark.$get(undefined, auth(session.access_token))
-      if (!res.ok) return fail(res)
-      const rows = (await res.json()) as RawBookmarkRow[]
-      return { data: toDTOs(rows.filter(row => row.folder_id === null)) }
+      const query: BookmarkQuery = {
+        page: page.toString(),
+        perPage: perPage.toString(),
+        unclassified: 'true'
+      }
+      res = await client.api.bookmark.$get(
+        { query },
+        auth(session.access_token)
+      )
     } else {
       // 特定のフォルダのブックマークを取得
+      const query: BookmarkQuery = {
+        page: page.toString(),
+        perPage: perPage.toString()
+      }
       res = await client.api.bookmark.folders[':folderId'].bookmarks.$get(
-        { param: { folderId: folderId.toString() } },
+        { 
+          param: { folderId: folderId.toString() },
+          query
+        } as any, // Honoの型定義の制限により一時的にanyを使用
         auth(session.access_token),
       )
-      if (!res.ok) return fail(res)
-      const rows = (await res.json()) as RawBookmarkRow[]
-      return { data: toDTOs(rows) }
+    }
+    if (!res.ok) return fail(res)
+
+    const data = await res.json() as BookmarkResponse
+    return { 
+      data: {
+        bookmarks: toDTOs(data.bookmarks),
+        total: data.total
+      }
     }
   } catch (err) {
     console.error(err)

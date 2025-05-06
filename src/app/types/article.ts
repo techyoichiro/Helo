@@ -14,9 +14,14 @@ export interface ArticleListProps {
     itemsPerPage?: number;
 }
 
-export type ArticleResponse = Article[] | ErrorResponse;
+export interface ArticleResponse {
+    articles: Article[];
+    total: number;
+}
 
-export function isErrorResponse(response: ArticleResponse): response is ErrorResponse {
+export type ArticleResponseOrError = ArticleResponse | ErrorResponse;
+
+export function isErrorResponse(response: ArticleResponseOrError): response is ErrorResponse {
     return 'error' in response;
 }
 

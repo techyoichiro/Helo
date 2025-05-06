@@ -38,15 +38,25 @@ const app = new Hono<{
   async (c) => {
     const supabase = c.get('supabase')
     const userId   = c.get('user').id
+    const page     = Number(c.req.query('page') ?? '1')
+    const perPage  = Number(c.req.query('perPage') ?? '12')
+    const unclassified = c.req.query('unclassified') === 'true'
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('bookmarks')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
+    if (unclassified) {
+      query.is('folder_id', null)
+    }
+
+    const { data, error, count } = await query
+      .range((page - 1) * perPage, page * perPage - 1)
+
     if (error) return c.json({ error: error.message }, 500)
-    return c.json(data)
+    return c.json({ bookmarks: data, total: count ?? 0 })
   }
 )
 
@@ -260,6 +270,8 @@ const app = new Hono<{
     const supabase = c.get('supabase')
     const folderId = Number(c.req.valid('param').folderId)
     const userId   = c.get('user').id
+    const page     = Number(c.req.query('page') ?? '1')
+    const perPage  = Number(c.req.query('perPage') ?? '12')
 
     /* フォルダ所有チェック */
     const { data: folder } = await supabase
@@ -270,15 +282,16 @@ const app = new Hono<{
       .single()
     if (!folder) return c.json({ error: 'Folder not found' }, 404)
 
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('bookmarks')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('folder_id', folderId)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .range((page - 1) * perPage, page * perPage - 1)
 
     if (error) return c.json({ error: error.message }, 500)
-    return c.json(data)
+    return c.json({ bookmarks: data, total: count ?? 0 })
   }
 )
 

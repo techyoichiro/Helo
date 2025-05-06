@@ -63,9 +63,9 @@ export default async function BookmarksPage() {
       <div className="h-[calc(100vh-6rem)] py-4">
         {!bookmarks ? (
           <p>読み込み中...</p>
-        ) : bookmarks.length > 0 ? (
+        ) : bookmarks.bookmarks.length > 0 ? (
           <BookMarkList
-            items={bookmarks}
+            items={bookmarks.bookmarks}
             session={{ access_token: session.access_token }}
           />
         ) : (
