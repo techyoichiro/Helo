@@ -5,11 +5,10 @@ import { BookmarkIcon } from "@heroicons/react/24/outline"
 import { client } from '@/app/lib/hono/hono';
 import { useRouter } from "next/navigation"
 import { z } from "zod"
+import type { FolderDTO } from "@/app/types/bookmark"
 
 interface AddBookmarkFormProps {
-  session: {
-    access_token: string
-  }
+  session: { access_token: string }
 }
 
 // url は必須 & URL形式であることをチェック
@@ -40,8 +39,8 @@ export default function AddBookmarkForm({ session }: AddBookmarkFormProps) {
 
     // APIにリクエスト
     try {
-      const res = await client.api.bookmark.url.$post({
-        json: { url },
+      const res = await client.api.bookmark.url.$post(
+        { json: { url } ,
       },{
         headers: {
           'Authorization': `Bearer ${session.access_token}`

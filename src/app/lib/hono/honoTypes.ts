@@ -1,6 +1,7 @@
-import { User } from '@/app/types/user';
+import { users } from '@/server/db/schema'
 
 export interface Variables {
-  user: User;
-  isSubscribed: boolean;
+  user: typeof users.$inferSelect
+  /** プレミアムかどうか */
+  isSubscribed?: boolean
 }

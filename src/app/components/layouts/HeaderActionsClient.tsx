@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/ava
 import { Bookmark, LucideUser } from 'lucide-react'
 import { LoginDialog } from "@/app/components/common/LoginDialog"
 import { signOut } from '@/app/actions/auth'
-import { createClient } from '@/app/lib/supabase/client'
+import { createBrowserSupabase } from '@/app/lib/supabase/client'
 import { HeaderActionsClientProps } from '@/app/types/user'
 import Link from "next/link"
 
@@ -25,7 +25,7 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient()
+      const supabase = createBrowserSupabase()
       await supabase.auth.signOut()
       
       await signOut()

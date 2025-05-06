@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import TopicCard from './TopicCard';
-import { createClient } from '@/app/lib/supabase/client'
+import { createBrowserSupabase } from '@/app/lib/supabase/client'
 import { Topic, TrendProps, IconRecord } from '@/app/types/article'
 
 const MAX_VISIBLE_TOPICS = 42;
@@ -15,7 +15,7 @@ const TopicList: React.FC<TrendProps> = ({ searchTerm }) => {
   useEffect(() => {
     const fetchTopics = async () => {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = createBrowserSupabase();
 
       const { data, error } = await supabase
         .from('topics')

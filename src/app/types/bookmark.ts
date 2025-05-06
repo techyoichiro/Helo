@@ -2,16 +2,13 @@
    1.  DB スキーマ由来の型
    ※ 直接 UI では使わない
 ──────────────────────────────── */
-import { bookmarks, folders, bookmarkFolders } from "@/server/db/schema"
+import { bookmarks, folders } from "@/server/db/schema"
 
-export type BookmarkDB        = typeof bookmarks.$inferSelect    // Date 型を含む
+export type BookmarkDB        = typeof bookmarks.$inferSelect
 export type NewBookmark       = typeof bookmarks.$inferInsert
 
 export type FolderDB          = typeof folders.$inferSelect
 export type NewFolder         = typeof folders.$inferInsert
-
-export type BookmarkFolderDB  = typeof bookmarkFolders.$inferSelect
-export type NewBookmarkFolder = typeof bookmarkFolders.$inferInsert
 
 /* ──────────────────────────────
    2.  API / UI に渡す DTO 型
@@ -42,7 +39,7 @@ export interface SessionProp {
    4.  コンポーネント用 Props
 ──────────────────────────────── */
 export interface BookMarkListProps {
-  items: BookmarkDTO[]      // ← DTO 配列だけ
+  items: BookmarkDTO[]
   session: SessionProp
 }
 
@@ -60,4 +57,15 @@ export interface RawBookmark {
     createdAt: string
     publishedAt?: string | null
     userId: string
+}
+
+export interface RawBookmarkRow {
+  id:           number
+  user_id:      string
+  folder_id:    number
+  title:        string
+  article_url:  string
+  og_image_url: string | null
+  published_at: string | null
+  created_at:   string
 }

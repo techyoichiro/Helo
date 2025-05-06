@@ -1,44 +1,29 @@
-import { createClient } from '@/app/lib/supabase/server'
-import { HeaderActionsClient } from './HeaderActionsClient'
+// src/app/components/layouts/header/HeaderActionsServer.tsx
+import { createClient }         from '@/app/lib/supabase/server'
+import { HeaderActionsClient }  from './HeaderActionsClient'
 
 export async function HeaderActionsServer() {
+  /* ────────── Supabase Server Client ────────── */
   const supabase = await createClient()
 
-  try {
-    // 認証されたユーザー情報を取得
-    const { data: userData } = await supabase.auth.getUser()
+  /* 1. ユーザーを取得（リモート検証） */
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
 
-    if (!userData?.user) {
-      // ユーザーが存在しない場合
-      return <HeaderActionsClient initialUser={null} />
-    }
-
-    const user = userData.user
-
-    // 必要なユーザーデータを抽出
-    const avatarUrl = user.user_metadata?.avatar_url || null
-    const fullName = user.user_metadata?.full_name || null
-
-    return (
-      <HeaderActionsClient
-        initialUser={{
-          avatarUrl,
-          fullName,
-        }}
-      />
-    )
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      // セッションがない場合はエラーを無視してログアウト状態を処理
-      if (error.name === 'AuthSessionMissingError') {
-        return <HeaderActionsClient initialUser={null} />
-      }
-
-      console.error('Unexpected error fetching authenticated user:', error.message)
-    } else {
-      console.error('An unknown error occurred:', error)
-    }
-
+  /* 2. 取得失敗 or 未ログインなら null を渡して終了 */
+  if (error || !user) {
     return <HeaderActionsClient initialUser={null} />
   }
+
+  /* 3. SessionUser 形式で必要データを抽出 */
+  const initialUser = {
+    user,                                       // 👈 必須
+    avatarUrl: user.user_metadata?.avatar_url ?? undefined,
+    fullName:  user.user_metadata?.full_name  ?? undefined,
+    email:     user.email                      ?? undefined,
+  }
+
+  return <HeaderActionsClient initialUser={initialUser} />
 }

@@ -6,26 +6,32 @@ import { fetchBookmarkCount } from '@/app/lib/api/bookmark';
 export default async function Page() {
     const supabase = await createClient()
 
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-    if (userError) {
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser()
+  
+    if (userErr || !user) {
+      return (
+        <div className="py-10 text-center text-red-500">
+          ログインが必要です
+        </div>
+      )
+    }
+
+    /* 2. アクセストークンを取得（Cookie から JWT を読むだけ） */
+    const {
+        data: { session },
+        error: sessErr,
+    } = await supabase.auth.getSession()
+
+    if (sessErr || !session?.access_token) {
         return (
-        <div className="text-center py-10">
-            <p className="text-red-500">ユーザー情報の取得中にエラーが発生しました。</p>
+        <div className="py-10 text-center text-red-500">
+            セッションの取得に失敗しました
         </div>
         )
     }
-
-    const user = userData.user
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-    if (sessionError) {
-        return (
-        <div className="text-center py-10">
-            <p className="text-red-500">セッションの取得中にエラーが発生しました。</p>
-        </div>
-        )
-    }
-
-    const session = sessionData.session
 
     if (!user || !session?.access_token) {
         console.log('BookmarksPage: No valid session found')

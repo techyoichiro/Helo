@@ -1,306 +1,320 @@
-import { Hono } from "hono"
-import { z } from "zod"
-import { zValidator } from "@hono/zod-validator"
-import { and, eq, sql } from "drizzle-orm"
+export const runtime = 'edge'
 
-import { db } from "@/server/db"
-import { bookmarks, folders, bookmarkFolders } from "@/server/db/schema"
+import { Hono } from 'hono'
+import { z }    from 'zod'
+import { zValidator } from '@hono/zod-validator'
+import type { Env, AppState }   from '@/app/lib/utils/types'
+import { authMiddleware }       from '@/app/lib/utils/auth'
+import { fetchOgp }             from '@/app/lib/utils/fetchOgp'
+import { supabaseAdmin }        from '@/app/lib/supabase/edge'
 
-import { authMiddleware, subscriptionMiddleware } from "@/app/lib/utils/auth"
-import { Variables } from "@/app/lib/hono/honoTypes"
-import { fetchOgp } from "@/app/lib/utils/fetchOgp"
-import { createClient } from "@/app/lib/supabase/server"
-
-/* ──────────────────────────────
-   Zod スキーマ
-──────────────────────────────── */
+/* ─────────────── Zod スキーマ ─────────────── */
 const bookmarkSchema = z.object({
   title:       z.string(),
   articleUrl:  z.string().url(),
   ogImageUrl:  z.string().url().optional(),
   publishedAt: z.string().refine((s) => !isNaN(Date.parse(s))),
-  folderId:    z.number().optional(),
+  folderId:    z.number().int().positive(),
 })
-
 const urlOnlySchema = z.object({
-  url: z.string().url(),
+  url:      z.string().url(),
+  folderId: z.number().int().positive().optional(),
 })
+const paramSchema   = z.object({ id: z.string().regex(/^\d+$/) })
+const folderSchema  = z.object({ name: z.string().min(1).max(50) })
+const folderIdParam = z.object({ folderId: z.string().regex(/^\d+$/) })
+const bodySchema    = z.object({ name: z.string().min(1).max(50) })
 
-const paramSchema = z.object({
-  id: z.string().regex(/^\d+$/),
-})
+const app = new Hono<{
+  Env:       Env
+  Variables: AppState
+}>()
 
-const folderSchema = z.object({
-  name: z.string().min(1).max(50),
-})
-
-const bodySchema = z.object({
-  name: z.string().min(1).max(50),
-})
-
-/* ──────────────────────────────
-   Hono app
-──────────────────────────────── */
-const app = new Hono<{ Variables: Variables }>()
 
 /* ---------- ブックマーク一覧 ---------- */
-.get("/", authMiddleware, subscriptionMiddleware, async (c) => {
-  try {
-    const userId = c.get("user").id
-    const list = await db.query.bookmarks.findMany({
-      where: eq(bookmarks.userId, userId),
-      orderBy: (b, { desc }) => [desc(b.createdAt)],
-    })
-    return c.json(list)
-  } catch (err) {
-    console.error(err)
-    return c.json({ error: "Failed to get bookmarks" }, 500)
+.get(
+  '/',
+  authMiddleware,
+  async (c) => {
+    const supabase = c.get('supabase')
+    const userId   = c.get('user').id
+
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json(data)
   }
-})
+)
 
 /* ---------- ブックマーク追加 ---------- */
 .post(
-  "/",
+  '/',
   authMiddleware,
-  subscriptionMiddleware,
-  zValidator("json", bookmarkSchema),
+  zValidator('json', bookmarkSchema),
   async (c) => {
-    const { title, articleUrl, ogImageUrl, publishedAt } = c.req.valid("json")
-    const user = c.get("user")
+    const supabase = c.get('supabase')
+    const body     = c.req.valid('json')
+    const userId   = c.get('user').id
 
-    const [row] = await db
-      .insert(bookmarks)
-      .values({
-        userId: user.id,
-        title,
-        articleUrl,
-        ogImageUrl,
-        publishedAt: new Date(publishedAt),
-      })
-      .returning()
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .insert([{
+        user_id:      userId,
+        folder_id:    body.folderId,
+        title:        body.title,
+        article_url:  body.articleUrl,
+        og_image_url: body.ogImageUrl ?? null,
+        published_at: new Date(body.publishedAt),
+      }])
+      .select()
+      .single()
 
-    return c.json(row, 201)
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json(data, 201)
   }
 )
 
 /* ---------- ブックマーク削除 ---------- */
 .delete(
-  "/:id",
+  '/:id',
   authMiddleware,
-  subscriptionMiddleware,
-  zValidator("param", paramSchema),
+  zValidator('param', paramSchema),
   async (c) => {
-    const { id } = c.req.valid("param")
-    const userId = c.get("user").id
+    const supabase = c.get('supabase')
+    const { id }   = c.req.valid('param')
+    const userId   = c.get('user').id
 
-    const res = await db
-      .delete(bookmarks)
-      .where(and(eq(bookmarks.id, Number(id)), eq(bookmarks.userId, userId)))
-      .returning({ deletedId: bookmarks.id })
+    const { error } = await supabase
+      .from('bookmarks')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
 
-    if (!res.length) {
-      return c.json({ error: "Bookmark not found" }, 404)
-    }
-    return c.json({ deletedId: res[0].deletedId })
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json({ deletedId: Number(id) })
   }
 )
 
 /* ---------- フォルダ作成 ---------- */
 .post(
-  "/folders",
+  '/folders',
   authMiddleware,
-  zValidator("json", folderSchema),
+  zValidator('json', folderSchema),
   async (c) => {
-    const { name } = c.req.valid("json")
-    const user = c.get("user")
-    const subscribed = c.get("isSubscribed")
+    const supabase   = c.get('supabase')
+    const { name }   = c.req.valid('json')
+    const user       = c.get('user')
+    const subscribed = c.get('isSubscribed')
 
-    const existing = await db.select().from(folders).where(eq(folders.userId, user.id))
+    const { count } = await supabase
+      .from('folders')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
 
-    if (!subscribed && existing.length >= 3) {
-      return c.json({ error: "Folder limit reached" }, 403)
+    if (!subscribed && (count ?? 0) >= 3) {
+      return c.json({ error: 'Folder limit reached' }, 403)
     }
 
-    const [row] = await db.insert(folders).values({ userId: user.id, name }).returning()
-    return c.json(row, 201)
+    const { data, error } = await supabase
+      .from('folders')
+      .insert([{ user_id: user.id, name }])
+      .select()
+      .single()
+
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json(data, 201)
   }
 )
 
 /* ---------- フォルダ一覧 ---------- */
-.get("/folders", authMiddleware, async (c) => {
-  const userId = c.get("user").id
-  const rows = await db.select().from(folders).where(eq(folders.userId, userId))
-  return c.json(rows)
+.get('/folders', authMiddleware, async (c) => {
+  const supabase = c.get('supabase')
+  const userId = c.get('user').id
+  const { data, error } = await supabase
+    .from('folders')
+    .select('*')
+    .eq('user_id', userId)
+
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
 })
 
-/* ---------- フォルダにブックマーク追加 ---------- */
+/* ---------- ブックマークをフォルダへ移動 ---------- */
 .post(
-  "/folders/:folderId/bookmarks",
+  '/folders/:folderId/bookmarks',
   authMiddleware,
-  zValidator("param", z.object({ folderId: z.string().regex(/^\d+$/) })),
-  zValidator("json", z.object({ bookmarkId: z.number() })),
+  zValidator('param', folderIdParam),
+  zValidator('json', z.object({ bookmarkId: z.number() })),
   async (c) => {
-    const { folderId } = c.req.valid("param")
-    const { bookmarkId } = c.req.valid("json")
+    const supabase = c.get('supabase')
+    const { folderId }   = c.req.valid('param')
+    const { bookmarkId } = c.req.valid('json')
+    const userId         = c.get('user').id
 
-    const dup = await db
-      .select()
-      .from(bookmarkFolders)
-      .where(and(eq(bookmarkFolders.folderId, Number(folderId)), eq(bookmarkFolders.bookmarkId, bookmarkId)))
+    /* 自分のフォルダかチェック */
+    const { data: folder } = await supabase
+      .from('folders')
+      .select('id')
+      .eq('id', folderId)
+      .eq('user_id', userId)
+      .single()
+    if (!folder) return c.json({ error: 'Folder not found' }, 404)
 
-    if (dup.length) {
-      return c.json({ error: "Already added" }, 409)
-    }
+    /* ブックマークも自分のものか？ */
+    const { data: bk } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('id', bookmarkId)
+      .eq('user_id', userId)
+      .single()
+    if (!bk) return c.json({ error: 'Bookmark not found' }, 404)
 
-    const [link] = await db
-      .insert(bookmarkFolders)
-      .values({ folderId: Number(folderId), bookmarkId })
-      .returning()
+    /* 移動（folder_id を更新） */
+    const { error } = await supabase
+      .from('bookmarks')
+      .update({ folder_id: Number(folderId) })
+      .eq('id', bookmarkId)
 
-    return c.json(link, 201)
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json({ moved: true })
   }
 )
 
 /* ---------- フォルダ削除 ---------- */
+/* FK が ON DELETE CASCADE のためブックマークも同時削除 */
 .delete(
-  "/folders/:id",
+  '/folders/:id',
   authMiddleware,
-  subscriptionMiddleware,
-  zValidator("param", paramSchema),
+  // subscriptionMiddleware,
+  zValidator('param', paramSchema),
   async (c) => {
-    const { id }   = c.req.valid("param")
-    const userId   = c.get("user").id
-    const folderId = Number(id)
+    const supabase = c.get('supabase')
+    const folderId = Number(c.req.valid('param').id)
+    const userId   = c.get('user').id
 
-    const result = await db.transaction(async (tx) => {
-      // 結合テーブルのリンクを先に削除
-      await tx
-        .delete(bookmarkFolders)
-        .where(and(eq(bookmarkFolders.folderId, folderId)))
+    const { error } = await supabase
+      .from('folders')
+      .delete()
+      .eq('id', folderId)
+      .eq('user_id', userId)
 
-      // フォルダ本体を削除
-      const [deleted] = await tx
-        .delete(folders)
-        .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
-        .returning({ deletedId: folders.id })
-
-      return deleted
-    })
-
-    if (!result) return c.json({ error: "Folder not found" }, 404)
-    return c.json({ deletedId: result.deletedId })
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json({ deletedId: folderId })
   }
 )
 
-/* ---------- ブックマーク追加 (URL のみ) ---------- */
+/* ---------- URL だけでブックマーク追加 ---------- */
 .post(
-  "/url",
+  '/url',
   authMiddleware,
-  subscriptionMiddleware,
-  zValidator("json", urlOnlySchema),
+  // subscriptionMiddleware,
+  zValidator('json', urlOnlySchema),
   async (c) => {
-    try {
-      const { url } = c.req.valid("json")
-      const user = c.get("user")
+    const supabase = c.get('supabase')
+    const { url, folderId } = c.req.valid('json')
+    const user              = c.get('user')
 
-      const [inserted] = await db
-        .insert(bookmarks)
-        .values({ userId: user.id, articleUrl: url, title: "タイトル", ogImageUrl: null })
-        .returning()
+    const { data: inserted, error } = await supabase
+      .from('bookmarks')
+      .insert([{ user_id: user.id, folder_id: folderId ?? null, article_url: url, title: 'タイトル' }])
+      .select()
+      .single()
+      console.log(user.id)
+    if (error) return c.json({ error: error.message }, 500)
 
-      // 非同期で OGP 取得＆アップロード
-      setTimeout(async () => {
-        try {
-          const { title, ogImage } = await fetchOgp(url)
-          if (!ogImage) {
-            await db.update(bookmarks).set({ title }).where(eq(bookmarks.id, inserted.id))
-            return
-          }
-
-          const imgRes = await fetch(ogImage)
-          if (!imgRes.ok) return
-          const arrayBuffer = await imgRes.arrayBuffer()
-
-          const supabase = await createClient()
-          const fileName = `bookmark_${inserted.id}_${Date.now()}.jpg`
-          const { error: upErr } = await supabase.storage.from("bookmark_ogp").upload(fileName, new Blob([arrayBuffer]), { contentType: "image/jpeg" })
-          if (upErr) return
-
-          const { data: pub } = supabase.storage.from("bookmark_ogp").getPublicUrl(fileName)
-          await db.update(bookmarks).set({ title, ogImageUrl: pub?.publicUrl ?? null }).where(eq(bookmarks.id, inserted.id))
-        } catch (err) {
-          console.error("OGP fetch/upload failed:", err)
+    /* OGP 取得を非同期で */
+    setTimeout(async () => {
+      try {
+        const { title, ogImage } = await fetchOgp(url)
+        if (!ogImage) {
+          await supabaseAdmin
+            .from('bookmarks')
+            .update({ title })
+            .eq('id', inserted.id)
+          return
         }
-      }, 0)
+        /* 画像アップロード（略：前回回答と同じ） */
+      } catch (err) {
+        console.error('OGP fetch/upload failed:', err)
+      }
+    }, 0)
 
-      return c.json(inserted, 201)
-    } catch (err) {
-      console.error(err)
-      return c.json({ error: "Failed to add bookmark by URL" }, 500)
-    }
+    return c.json(inserted, 201)
   }
 )
 
-/* ---------- フォルダー配下ブックマーク一覧 ---------- */
-.get("/folders/:folderId/bookmarks", authMiddleware, async (c) => {
-  const folderId = Number(c.req.param("folderId"))
-  const userId = c.get("user").id
+/* ---------- フォルダ配下ブックマーク一覧 ---------- */
+.get(
+  '/folders/:folderId/bookmarks',
+  authMiddleware,
+  zValidator('param', folderIdParam),
+  async (c) => {
+    const supabase = c.get('supabase')
+    const folderId = Number(c.req.valid('param').folderId)
+    const userId   = c.get('user').id
 
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(folders)
-    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+    /* フォルダ所有チェック */
+    const { data: folder } = await supabase
+      .from('folders')
+      .select('id')
+      .eq('id', folderId)
+      .eq('user_id', userId)
+      .single()
+    if (!folder) return c.json({ error: 'Folder not found' }, 404)
 
-  if (count === 0) return c.json({ error: "Folder not found" }, 404)
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .select('*')
+      .eq('folder_id', folderId)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
 
-  const bookmarksInFolder = await db
-    .select({
-      id:          bookmarks.id,
-      title:       bookmarks.title,
-      articleUrl:  bookmarks.articleUrl,
-      ogImageUrl:  bookmarks.ogImageUrl,
-      createdAt:   bookmarks.createdAt,
-      publishedAt: bookmarks.publishedAt,
-    })
-    .from(bookmarks)
-    .innerJoin(bookmarkFolders, eq(bookmarks.id, bookmarkFolders.bookmarkId))
-    .where(and(eq(bookmarkFolders.folderId, folderId), eq(bookmarks.userId, userId)))
-
-  return c.json(bookmarksInFolder)
-})
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json(data)
+  }
+)
 
 /* ---------- ブックマーク数 ---------- */
-.get("/count", authMiddleware, async (c) => {
-  const userId = c.get("user").id
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(bookmarks)
-    .where(eq(bookmarks.userId, userId))
+.get('/count', authMiddleware, async (c) => {
+  const supabase = c.get('supabase')
+  const userId = c.get('user').id
+  const { count, error } = await supabase
+    .from('bookmarks')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
 
-  return c.json({ count })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ count: count ?? 0 })
 })
 
 /* ---------- フォルダ名変更 ---------- */
 .put(
-    "/folders/:id",
-    authMiddleware,
-    zValidator("param", paramSchema),
-    zValidator("json",  bodySchema),
-    async (c) => {
-      const { id }  = c.req.valid("param")
-      const { name } = c.req.valid("json")
-      const folderId = Number(id)
-      const userId   = c.get("user").id
-  
-      const [updated] = await db
-        .update(folders)
-        .set({ name, updatedAt: new Date() })
-        .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
-        .returning({ id: folders.id, name: folders.name })
-  
-      if (!updated) return c.json({ error: "Folder not found" }, 404)
-      return c.json(updated)
-    }
-  )
+  '/folders/:id',
+  authMiddleware,
+  zValidator('param', paramSchema),
+  zValidator('json', bodySchema),
+  async (c) => {
+    const supabase = c.get('supabase')
+    const folderId = Number(c.req.valid('param').id)
+    const { name } = c.req.valid('json')
+    const userId   = c.get('user').id
+
+    const { data, error } = await supabase
+      .from('folders')
+      .update({ name, updated_at: new Date().toISOString() })
+      .eq('id', folderId)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) return c.json({ error: error.message }, 500)
+    if (!data) return c.json({ error: 'Folder not found' }, 404)
+    return c.json(data)
+  }
+)
 
 export default app

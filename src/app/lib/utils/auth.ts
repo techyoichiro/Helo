@@ -1,56 +1,54 @@
-import { Context, Next } from 'hono'
-import { createClient } from '@/app/lib/supabase/server'
-import { db } from '@/server/db'
-import { users } from '@/server/db/schema'
-import { eq } from 'drizzle-orm'
+import type { Context, Next } from 'hono'
+import { getSupabaseClient, supabaseAdmin } from '@/app/lib/supabase/edge'
+import type { Env, AppState } from './types'
 
-export async function authMiddleware(c: Context, next: Next) {
-  
-  const authHeader = c.req.header('Authorization')
-  
-  if (!authHeader) {
-    return c.json({ error: 'Unauthorized: Missing token' }, 401)
-  }
-
-  const token = authHeader.split(' ')[1]
+export async function authMiddleware(
+  c: Context<{
+    Bindings: Env
+    Variables: AppState
+  }>,
+  next: Next
+) {
+  // ─── 1) トークン取得 ─────────────────────────
+  const bearer = c.req.header('Authorization')    // "Bearer xxx"
+  const token  = bearer?.split(' ')[1]
   if (!token) {
-    return c.json({ error: 'Unauthorized: Invalid token format' }, 401)
+    return c.json({ error: 'Unauthorized' }, 401)
   }
 
-  try {
-    const supabase = await createClient()
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-
-    if (error) {
-      console.error('Error verifying token:', error)
-      return c.json({ error: 'Unauthorized: Invalid token' }, 401)
-    }
-
-    if (!user) {
-      return c.json({ error: 'User not found' }, 404)
-    }
-
-    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id))
-    if (!dbUser) {
-      return c.json({ error: 'User not found in database' }, 404)
-    }
-
-    c.set('user', dbUser)
-    await next()
-  } catch (error) {
-    console.error('Unexpected error in authMiddleware:', error)
-    return c.json({ error: 'Internal Server Error' }, 500)
+  // ─── 2) Supabase Auth でユーザー検証 ────────────
+  const supabase = getSupabaseClient(token)
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  if (authErr || !user) {
+    return c.json({ error: 'Unauthorized' }, 401)
   }
-}
 
-export async function subscriptionMiddleware(c: Context, next: Next) {
-  const user = c.get('user')
-  if (!user) {
+  // ─── 3) Service Role 版でも DB からユーザー行を取得 ───
+  const { data: dbUser, error: dbErr } = await supabaseAdmin
+    .from('users')
+    .select('id, subscription_status')
+    .eq('id', user.id)
+    .single()
+  if (dbErr || !dbUser) {
     return c.json({ error: 'User not found' }, 404)
   }
 
-  const isSubscribed = user.subscriptionStatus === 'active'
-  c.set('isSubscribed', isSubscribed)
+  // ─── 4) Context にセット ────────────────────────
+  c.set('supabase',       supabase)
+  c.set('supabaseAdmin',  supabaseAdmin)
+  c.set('user',           dbUser)
+  c.set('isSubscribed',   dbUser.subscription_status === 'premium')
+
   await next()
 }
 
+
+
+/* ──────────────────────────────
+ * 💳  サブスク判定ミドルウェア
+ * ──────────────────────────── */
+// export async function subscriptionMiddleware (c: Context, next: Next) {
+//   const user = c.get<UserRow>('user')     // 型安全に取得
+//   c.set('isSubscribed', user.subscription_status === 'premium')
+//   await next()
+// }

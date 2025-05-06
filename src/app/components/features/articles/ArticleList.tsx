@@ -1,37 +1,50 @@
-import { createClient } from "@/app/lib/supabase/server";
-import ArticleCard from "@/app/components/features/articles/ArticleCard";
-import { ArticleListProps } from "@/app/types/article";
+// src/app/components/features/articles/ArticleList.tsx
+import { createClient }   from '@/app/lib/supabase/server'
+import ArticleCard        from '@/app/components/features/articles/ArticleCard'
+import { ArticleListProps } from '@/app/types/article'
 
-const ArticleList = async ({ items }: ArticleListProps) => {
-  const supabase = await createClient();
+export default async function ArticleList({ items }: ArticleListProps) {
+  /* ────────── Supabase Server Client ────────── */
+  const supabase = await createClient()
 
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
+  /* 1. 認証ユーザー取得（リモート検証） */
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData.session;
+  /* 2. access_token が必要な場合だけセッション取得 */
+  const {
+    data: { session },
+  } = user ? await supabase.auth.getSession() : { data: { session: null } }
 
-  // エラーレスポンスのチェック
+  /* ----- エラー表示 / 空表示 ----- */
   if (!Array.isArray(items)) {
-    return <div className="py-20 text-center font-bold text-lg text-red-500">{items.error}</div>;
+    return (
+      <div className="py-20 text-center font-bold text-lg text-red-500">
+        {items.error}
+      </div>
+    )
   }
 
   if (items.length === 0) {
-    return <div className="py-20 text-center font-bold text-lg text-base-light">No posts yet</div>;
+    return (
+      <div className="py-20 text-center font-bold text-lg text-base-light">
+        No posts yet
+      </div>
+    )
   }
 
+  /* ----- 一覧描画 ----- */
   return (
     <div className="flex flex-wrap justify-between">
       {items.map((item, i) => (
-        <ArticleCard 
-          key={`post-item-${i}`} 
+        <ArticleCard
+          key={`post-item-${i}`}
           item={item}
-          user={user}
-          session={session}
+          user={user ?? null}
+          session={session ?? null}
         />
       ))}
     </div>
-  );
-};
-
-export default ArticleList;
+  )
+}

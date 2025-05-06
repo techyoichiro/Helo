@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:gen": "drizzle-kit generate"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -26,14 +27,14 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.47.9",
+    "@supabase/supabase-js": "^2.49.4",
+    "@vercel/postgres": "^0.10.0",
     "cheerio": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.38.2",
     "heroicons": "^2.2.0",
     "hono": "^4.6.14",
     "jsdom": "^25.0.1",
@@ -55,7 +56,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwind-scrollbar-hide": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.24.1",
+    "zod": "^3.24.3",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
@@ -67,12 +68,13 @@
     "@types/react-dom": "^19",
     "@types/xml2js": "^0.4.14",
     "ajv": "^8.17.1",
-    "drizzle-kit": "^0.30.1",
+    "drizzle-kit": "^0.31.0",
+    "drizzle-orm": "^0.43.1",
     "eslint": "^9.17.0",
     "eslint-config-next": "15.1.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.4.0"
   }
 }

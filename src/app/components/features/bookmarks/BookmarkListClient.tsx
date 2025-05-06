@@ -55,7 +55,7 @@ export default function BookmarkListClient({
   /* --- ここでは API 叩かずに TODO として stub --- */
   const handleRename = async () => {
     if (!selected) return
-    const { data, error } = await renameFolder(session, selected.id, { name: newName })
+    const { error } = await renameFolder(session, selected.id, newName)
     if (error) return
     /* 更新後の処理 */
     // ローカル配列の名称を更新

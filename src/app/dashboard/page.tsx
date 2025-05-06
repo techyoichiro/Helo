@@ -1,70 +1,73 @@
-import BookMarkList from "@/app/components/features/bookmarks/BookMarkList"
-import { fetchBookmarks } from "@/app/lib/api/bookmark"
-import { createClient } from '@/app/lib/supabase/server'
-import AddBookmarkForm from "@/app/components/features/bookmarks/AddBookmarkForm"
-
+// src/app/dashboard/bookmarks/page.tsx
+import BookMarkList     from '@/app/components/features/bookmarks/BookMarkList'
+import AddBookmarkForm  from '@/app/components/features/bookmarks/AddBookmarkForm'
+import { fetchBookmarks } from '@/app/lib/api/bookmark'
+import { createClient }   from '@/app/lib/supabase/server'
 
 export default async function BookmarksPage() {
+  /* ────────── Supabase (Server) ────────── */
   const supabase = await createClient()
 
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError) {
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser()
+
+  if (userErr || !user) {
     return (
-      <div className="text-center py-10">
-        <p className="text-red-500">ユーザー情報の取得中にエラーが発生しました。</p>
+      <div className="py-10 text-center text-red-500">
+        ログインが必要です
       </div>
     )
   }
 
-  const user = userData.user
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) {
+  /* 2. アクセストークンを取得（Cookie から JWT を読むだけ） */
+  const {
+    data: { session },
+    error: sessErr,
+  } = await supabase.auth.getSession()
+
+  if (sessErr || !session?.access_token) {
     return (
-      <div className="text-center py-10">
-        <p className="text-red-500">セッションの取得中にエラーが発生しました。</p>
+      <div className="py-10 text-center text-red-500">
+        セッションの取得に失敗しました
       </div>
     )
   }
 
-  const session = sessionData.session
+  /* 3. Edge API からブックマークを取得 */
+  const { data: bookmarks, error: bmErr } = await fetchBookmarks({
+    access_token: session.access_token,
+  })
 
-  if (!user || !session?.access_token) {
-    console.log('BookmarksPage: No valid session found')
+  if (bmErr) {
+    console.error(bmErr)
     return (
-      <div className="text-center py-10">
-        <p className="text-red-500">ブックマークを取得するにはログインが必要です</p>
+      <div className="py-10 text-center text-red-500">
+        ブックマーク取得に失敗しました
       </div>
     )
   }
 
-  const { data: bookmarks, error: bookmarksError } = await fetchBookmarks(session)
-  if (bookmarksError) {
-    console.error("Error fetching bookmarks:", bookmarksError)
-    return (
-      <div className="text-center py-10">
-        <p className="text-red-500">ブックマークの取得中にエラーが発生しました。</p>
-      </div>
-    )
-  }
-
+  /* ────────── UI ────────── */
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ブックマーク一覧</h1>
-      </div>
+      <h1 className="text-2xl font-bold">ブックマーク一覧</h1>
 
-      <AddBookmarkForm session={session} />
+      {/* URL 直登録フォーム */}
+      <AddBookmarkForm session={{ access_token: session.access_token }} />
 
-      <div className="h-[calc(100vh-6rem)]">
-        <div className="py-4">
-          {!bookmarks ? (
-            <p>読み込み中...</p>
-          ) : bookmarks.length > 0 ? (
-            <BookMarkList items={bookmarks} session={session} />
-          ) : (
-            <p className="text-center">ブックマークがありません。</p>
-          )}
-        </div>
+      <div className="h-[calc(100vh-6rem)] py-4">
+        {!bookmarks ? (
+          <p>読み込み中...</p>
+        ) : bookmarks.length > 0 ? (
+          <BookMarkList
+            items={bookmarks}
+            session={{ access_token: session.access_token }}
+          />
+        ) : (
+          <p className="text-center">ブックマークがありません。</p>
+        )}
       </div>
     </div>
   )

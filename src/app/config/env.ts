@@ -4,7 +4,7 @@ const serverSchema = z.object({
   // Node
   NODE_ENV: z.enum(["development", "test", "production"]),
   // Database
-  DATABASE_URL: z.string().min(1),
+  POSTGRES_URL: z.string().min(1),
   // Supabase
   SUPABASE_URL: z.string().min(1),
   SUPABASE_SERVICE_ROLE: z.string().min(1),
@@ -12,7 +12,7 @@ const serverSchema = z.object({
 
 const processEnv = {
   NODE_ENV: process.env.NODE_ENV,
-  DATABASE_URL: process.env.DATABASE_URL,
+  POSTGRES_URL: process.env.POSTGRES_URL,
   SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_SERVICE_ROLE: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 };
