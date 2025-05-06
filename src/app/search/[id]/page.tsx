@@ -8,7 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/ava
 import { fetchArticlesByTopic } from "@/app/lib/api/article";
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
-  const topic = params.id;
+  const resolvedParams = await params;
+  const topic = resolvedParams.id;
   const name = searchParams.name;
   const logo = searchParams.logo;
   const articlesOrError = await fetchArticlesByTopic(topic);
