@@ -1,23 +1,15 @@
 import * as cheerio from 'cheerio';
-import NodeCache from 'node-cache';
-import { RateLimiter } from 'limiter';
 
-// キャッシュとレートリミッターの初期化
-const cache = new NodeCache({ stdTTL: 3600 }); // デフォルトTTL: 1時間
-const limiter = new RateLimiter({
-  tokensPerInterval: 5,
-  interval: 'second', // 1秒間に5リクエスト
-});
+// シンプルなキャッシュ実装
+const cache = new Map<string, { value: string; timestamp: number }>();
+const CACHE_TTL = 3600 * 1000; // 1時間
 
 export const getOgImageUrl = async (url: string): Promise<string | undefined> => {
   // キャッシュをチェック
-  const cachedImage = cache.get<string>(url);
-  if (cachedImage) {
-    return cachedImage;
+  const cached = cache.get(url);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.value;
   }
-
-  // レート制限のトークンを消費
-  await limiter.removeTokens(1);
 
   try {
     // URLにリクエストを送信
@@ -36,7 +28,7 @@ export const getOgImageUrl = async (url: string): Promise<string | undefined> =>
 
     if (ogImage) {
       // キャッシュに保存
-      cache.set(url, ogImage);
+      cache.set(url, { value: ogImage, timestamp: Date.now() });
     }
 
     return ogImage || undefined;

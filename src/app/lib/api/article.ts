@@ -70,12 +70,21 @@ export async function fetchTrendArticles(): Promise<ArticleResponseOrError> {
     const response = await client.api.articles.$get({
       next: { revalidate: REVALIDATE_TIME },
     });
-    console.log(response)
+    
     if (!response.ok) {
-      return { error: `response: ${response}` };
+      console.error('Failed to fetch trend articles:', {
+        status: response.status,
+        statusText: response.statusText
+      });
+      return { error: 'Failed to fetch articles' };
     }
 
     const data = await response.json() as Article[];
+    if (!Array.isArray(data)) {
+      console.error('Invalid response format:', data);
+      return { error: 'Invalid response format' };
+    }
+
     return {
       articles: data,
       total: data.length
