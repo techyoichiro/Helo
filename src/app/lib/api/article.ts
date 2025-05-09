@@ -70,9 +70,9 @@ export async function fetchTrendArticles(): Promise<ArticleResponseOrError> {
     const response = await client.api.articles.$get({
       next: { revalidate: REVALIDATE_TIME },
     });
-    
+    console.log(response)
     if (!response.ok) {
-      return { error: 'Failed to fetch articles' };
+      return { error: `response: ${response}` };
     }
 
     const data = await response.json() as Article[];
