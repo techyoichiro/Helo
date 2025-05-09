@@ -92,6 +92,7 @@ export default function BookmarkListClient({
     setTotal(prev => prev - 1)
   }, [])
 
+  // フォルダー一覧の取得
   useEffect(() => {
     const loadFolders = async () => {
       const { data: folders = [] } = await fetchFolders(session)
@@ -100,17 +101,14 @@ export default function BookmarkListClient({
     loadFolders()
   }, [session])
 
-  // 初期表示時と依存関係が変更された時にのみ実行
+  // ブックマークの取得（初期表示時と依存関係が変更された時）
   useEffect(() => {
-    refreshBookmarks(true)
-  }, [session, selected, viewMode])
-
-  // ページ変更時は追加読み込み
-  useEffect(() => {
-    if (page > 1) {
+    if (page === 1) {
+      refreshBookmarks(true)
+    } else {
       refreshBookmarks(false)
     }
-  }, [page, refreshBookmarks])
+  }, [page, selected, viewMode, refreshBookmarks])
 
   return (
     <div className="space-y-4">

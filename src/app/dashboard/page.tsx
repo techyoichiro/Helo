@@ -24,7 +24,7 @@ export default async function BookmarksPage() {
     )
   }
 
-  /* 2. アクセストークンを取得（Cookie から JWT を読むだけ） */
+  /* 2. アクセストークンを取得 */
   const {
     data: { session },
     error: sessErr,

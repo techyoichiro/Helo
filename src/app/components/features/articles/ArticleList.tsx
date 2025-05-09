@@ -12,11 +12,6 @@ export default async function ArticleList({ items }: ArticleListProps) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  /* 2. access_token が必要な場合だけセッション取得 */
-  const {
-    data: { session },
-  } = user ? await supabase.auth.getSession() : { data: { session: null } }
-
   /* ----- エラー表示 / 空表示 ----- */
   if (!Array.isArray(items)) {
     return (
@@ -42,7 +37,7 @@ export default async function ArticleList({ items }: ArticleListProps) {
           key={`post-item-${i}`}
           item={item}
           user={user ?? null}
-          session={session ?? null}
+          session={null}
         />
       ))}
     </div>
