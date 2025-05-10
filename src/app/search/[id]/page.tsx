@@ -13,13 +13,6 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
   const topic = resolvedParams.id;
   const name = resolvedSearchParams.name;
   const logo = resolvedSearchParams.logo;
-  const articlesOrError = await fetchArticlesByTopic(topic);
-
-  if (isErrorResponse(articlesOrError)) {
-    console.error(articlesOrError.error);
-    notFound();
-  }
-  const articles = articlesOrError.articles;
 
   return (
     <>
@@ -40,18 +33,38 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
           </div>
           <Suspense
             fallback={
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className="bg-gray-200 rounded-lg aspect-video" />
-                ))}
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-16 w-16 rounded-full bg-gray-200 animate-pulse" />
+                  <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className="space-y-4">
+                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+                    </div>
+                  ))}
+                </div>
               </div>
             }
           >
-            <ArticleList items={articles} />
+            <ArticleListContent topic={topic} />
           </Suspense>
         </div>
       </ContentWrapper>
     </>
   );
+}
+
+async function ArticleListContent({ topic }: { topic: string }) {
+  const articlesOrError = await fetchArticlesByTopic(topic);
+
+  if (isErrorResponse(articlesOrError)) {
+    console.error(articlesOrError.error);
+    notFound();
+  }
+
+  return <ArticleList items={articlesOrError.articles} />;
 }
 
