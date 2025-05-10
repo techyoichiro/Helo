@@ -237,7 +237,6 @@ const app = new Hono<{
       }])
       .select()
       .single()
-    console.log(user.id)
     if (error) return c.json({ error: error.message }, 500)
 
     /* OGP 取得を非同期で */

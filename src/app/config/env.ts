@@ -14,7 +14,7 @@ const processEnv = {
   NODE_ENV: process.env.NODE_ENV,
   POSTGRES_URL: process.env.POSTGRES_URL,
   SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_KEY,
 };
 
 const _serverEnv = serverSchema.safeParse(processEnv);

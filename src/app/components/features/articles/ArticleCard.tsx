@@ -9,6 +9,8 @@ import "dayjs/locale/ja";
 import relativeTime from "dayjs/plugin/relativeTime"
 import { LoginDialog } from "@/app/components/common/LoginDialog"
 import { addBookmark, deleteBookmark } from "@/app/lib/api/bookmark"
+import { createBrowserSupabase } from "@/app/lib/supabase/client"
+import { SessionProp } from "@/app/types/bookmark"
 
 dayjs.extend(relativeTime)
 dayjs.locale("ja");
@@ -36,75 +38,50 @@ export default function ArticleCard({
   const displayHostname = hostname.endsWith("hatenablog.com") ? "hatenablog.com" : hostname
 
   // ブックマーク追加
-  const handleBookmark = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (isBookmarking) return
-
-    // ユーザーがいない (未ログイン) なら、ログインダイアログを出す
-    if (!user || !session?.access_token) {
+  const handleBookmarkAction = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    // ユーザーが存在しない場合のみログインダイアログを表示
+    if (!user) {
       setIsLoginDialogOpen(true)
       return
     }
 
     setIsBookmarking(true)
     try {
-      const response = await addBookmark(session, {
-        title,
-        articleUrl: url,
-        ogImageUrl: og_image_url ?? "",
-        publishedAt: published_at,
-        folderId: null,
-      })
-
-      if (response.error) {
-        console.error(response.error)
-        return
-      }
-      if (response.data) {
-        setBookmarkId(response.data.id.toString())
-        setIsBookmarked(true)
-      }
-    } catch (error) {
-      console.error('ブックマークの追加中にエラーが発生しました', error)
-    } finally {
-      setIsBookmarking(false)
-    }
-  }
-
-  // ブックマーク削除
-  const handleDeleteBookmark = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (isBookmarking || !bookmarkId) return
-
-    if (!user || !session?.access_token) {
-      setIsLoginDialogOpen(true)
-      return
-    }
-
-    setIsBookmarking(true)
-    try {
-      const response = await deleteBookmark(session, bookmarkId)
-      if (response.error) {
-        console.error(response.error)
+      const supabase = createBrowserSupabase()
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      
+      if (!currentSession) {
+        setIsLoginDialogOpen(true)
         return
       }
 
-      // 成功したら状態をリセット
-      setBookmarkId(null)
-      setIsBookmarked(false)
+      if (isBookmarked && bookmarkId) {
+        await deleteBookmark(currentSession, bookmarkId)
+        setBookmarkId(null)
+      } else {
+        const response = await addBookmark(currentSession, {
+          title,
+          articleUrl: url,
+          ogImageUrl: og_image_url ?? "",
+          publishedAt: published_at,
+          folderId: null
+        })
+
+        if (response.error) {
+          console.error(response.error)
+          return
+        }
+        if (response.data) {
+          setBookmarkId(response.data.id.toString())
+        }
+      }
+      setIsBookmarked(!isBookmarked)
     } catch (error) {
-      console.error('ブックマークの削除中にエラーが発生しました', error)
+      console.error("Failed to handle bookmark:", error)
     } finally {
       setIsBookmarking(false)
-    }
-  }
-
-  // ユーザーアクション (登録/削除) をまとめる
-  const handleBookmarkAction = (e: React.MouseEvent) => {
-    if (isBookmarked) {
-      handleDeleteBookmark(e)
-    } else {
-      handleBookmark(e)
     }
   }
 
