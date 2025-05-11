@@ -398,11 +398,9 @@ export default function PrivacyPolicy() {
               本ポリシーに関するお問い合わせは、下記の窓口までお願いいたします。
             </p>
             <p className="text-gray-700 leading-relaxed font-bold">
-              住所：<br />
-              社名：<br />
-              代表取締役：<br />
-              担当部署：<br />
-              Eメールアドレス：
+              社名：Helo<br />
+              代表取締役：籾井洋一郎<br />
+              Eメールアドレス：helo.techworld25@gmail.com
             </p>
           </section>
 
