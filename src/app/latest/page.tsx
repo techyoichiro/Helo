@@ -8,6 +8,12 @@ import { Pagination } from "@/app/components/common/pagination";
 import { createClient } from '@/app/lib/supabase/server';
 import { fetchBookmarks } from '@/app/lib/api/bookmark';
 import { BookmarkDTO } from '@/app/types/bookmark';
+import { Tabs } from "@/app/components/layouts/Tabs";
+
+const tabItems = [
+  { href: "/", title: "トレンド" },
+  { href: "/latest", title: "最新" },
+];
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -29,7 +35,7 @@ export default async function LatestArticlesPage({ searchParams }: Props) {
 
       <ContentWrapper>
         <div className="py-10">
-          <h1 className="text-4xl font-bold mb-6">最新記事</h1>
+          <Tabs items={tabItems} className="mb-6" />
           <Suspense
             fallback={
               <div className="space-y-6">
