@@ -103,7 +103,7 @@ export default function ArticleCard({
           <div className="flex justify-between gap-4 mb-2">
             <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>
             {og_image_url && (
-              <div className="relative w-[160px] h-[90px]">
+              <div className="relative hidden sm:block w-[160px] h-[90px]">
                 <Image
                   src={og_image_url}
                   sizes="160px"

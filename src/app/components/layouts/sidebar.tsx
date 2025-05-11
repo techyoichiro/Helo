@@ -18,7 +18,7 @@ export function Sidebar({ className, items }: SidebarProps) {
     >
       <div
         // モバイルでは横並び、デスクトップでは縦並び
-        className="flex flex-row items-center justify-around space-x-4 md:flex-col md:space-x-0 md:space-y-4"
+        className="flex flex-row items-center justify-around space-x-0 md:space-x-4 md:flex-col md:space-x-0 md:space-y-4"
       >
         {items.map((item) => {
           const isActive = pathname === item.href
@@ -38,7 +38,7 @@ export function Sidebar({ className, items }: SidebarProps) {
             >
               <Link href={item.href}>
                 {item.icon}
-                <span className="ml-2">{item.title}</span>
+                <span className="ml-0.5 md:ml-2">{item.title}</span>
               </Link>
             </Button>
           )

@@ -63,7 +63,7 @@ export default function BookmarkCard({
 
         {/* 右列 ─ サムネイル（あれば） */}
         {ogImageUrl && (
-          <div className="relative w-[160px] h-[90px] flex-shrink-0">
+          <div className="relative hidden sm:block w-[160px] h-[90px] flex-shrink-0">
             <Image
               src={ogImageUrl}
               alt="OG Image"
