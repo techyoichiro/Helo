@@ -76,7 +76,7 @@ const getQiitaPostsByTags = async (tag: string): Promise<Article[]> => {
     return fetchQiitaPosts(`${QIITA_URL}items?query=tag%3A${tag}+stocks%3A%3E20`);
 };
 
-// Qiita：最新記事
+// Qiita：新着記事
 const getQiitaLatestPosts = async (): Promise<Article[]> => {
     return fetchQiitaPosts(`${QIITA_URL}items`);
 };
@@ -131,7 +131,7 @@ const app = new Hono()
                 getQiitaTrendingPosts(),
               ]);
             const allPosts = [...zennPosts, ...qiitaPosts];
-            // 日付順にソート (降順: 最新順)
+            // 日付順にソート (降順: 新着順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
             return c.json(sortedPosts);
         } catch (error) {
@@ -140,7 +140,7 @@ const app = new Hono()
         }
     })
 
-    // 最新記事取得
+    // 新着記事取得
     .get('/latest', async (c) => {
         try {
             const page = parseInt(c.req.query('page') || '1')
@@ -162,7 +162,7 @@ const app = new Hono()
                 return c.json({ error: 'No articles found' }, 404);
             }
 
-            // 日付順にソート (降順: 最新順)
+            // 日付順にソート (降順: 新着順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
             
             // ページネーション処理
@@ -209,7 +209,7 @@ const app = new Hono()
             }
             
             console.time('Sort and paginate');
-            // 日付順にソート (降順: 最新順)
+            // 日付順にソート (降順: 新着順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
             
             // ページネーション処理

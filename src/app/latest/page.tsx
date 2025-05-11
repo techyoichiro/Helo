@@ -12,7 +12,7 @@ import { Tabs } from "@/app/components/layouts/Tabs";
 
 const tabItems = [
   { href: "/", title: "トレンド" },
-  { href: "/latest", title: "最新" },
+  { href: "/latest", title: "新着" },
 ];
 
 type Props = {

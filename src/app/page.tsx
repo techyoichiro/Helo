@@ -8,7 +8,7 @@ import BookList from "@/app/components/features/books/BookList"
 
 const tabItems = [
   { href: "/", title: "トレンド" },
-  { href: "/latest", title: "最新" },
+  { href: "/latest", title: "新着" },
 ]
 
 export default async function Home() {

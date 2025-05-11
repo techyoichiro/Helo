@@ -104,7 +104,7 @@ export async function fetchTrendArticles(): Promise<ArticleResponseOrError> {
 }
 
 /* ================================================================
-   4. 最新記事
+   4. 新着記事
 ================================================================ */
 export async function fetchLatestArticles(
   page: number = 1,
