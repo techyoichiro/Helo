@@ -14,8 +14,8 @@ import { BookmarkDTO } from '@/app/types/bookmark';
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  const topic = resolvedParams.id;
-  const name = resolvedSearchParams.name;
+  const topic = decodeURIComponent(resolvedParams.id);
+  const name = resolvedSearchParams.name ? decodeURIComponent(resolvedSearchParams.name) : undefined;
   const logo = resolvedSearchParams.logo;
   const page = Number(resolvedSearchParams.page) || 1;
   const perPage = 10;
@@ -87,8 +87,8 @@ async function ArticleListContent({
   if (isErrorResponse(articlesOrError)) {
     console.error(articlesOrError.error);
     return (
-      <div className="py-20 text-center font-bold text-lg text-red-500">
-        {articlesOrError.error}
+      <div className="py-20 text-center font-bold text-lg text-gray-600">
+        入力されたトピックの記事がありませんでした
       </div>
     );
   }
