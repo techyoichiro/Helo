@@ -6,6 +6,7 @@ import { PageSEO } from "@/app/components/layouts/PageSEO";
 import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/article';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar";
 import { fetchArticlesByTopic } from "@/app/lib/api/article";
+import { Pagination } from "@/app/components/common/pagination";
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const resolvedParams = await params;
@@ -13,6 +14,8 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
   const topic = resolvedParams.id;
   const name = resolvedSearchParams.name;
   const logo = resolvedSearchParams.logo;
+  const page = Number(resolvedSearchParams.page) || 1;
+  const perPage = 10;
 
   return (
     <>
@@ -49,7 +52,7 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
               </div>
             }
           >
-            <ArticleListContent topic={topic} />
+            <ArticleListContent topic={topic} page={page} perPage={perPage} />
           </Suspense>
         </div>
       </ContentWrapper>
@@ -57,14 +60,41 @@ export default async function TopicArticlesPage({ params, searchParams }: TopicA
   );
 }
 
-async function ArticleListContent({ topic }: { topic: string }) {
-  const articlesOrError = await fetchArticlesByTopic(topic);
+async function ArticleListContent({ 
+  topic, 
+  page, 
+  perPage 
+}: { 
+  topic: string;
+  page: number;
+  perPage: number;
+}) {
+  const articlesOrError = await fetchArticlesByTopic(topic, page, perPage);
 
   if (isErrorResponse(articlesOrError)) {
     console.error(articlesOrError.error);
-    notFound();
+    return (
+      <div className="py-20 text-center font-bold text-lg text-red-500">
+        {articlesOrError.error}
+      </div>
+    );
   }
 
-  return <ArticleList items={articlesOrError.articles} />;
+  const totalPages = Math.ceil(articlesOrError.total / perPage);
+
+  return (
+    <>
+      <ArticleList items={articlesOrError.articles} />
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            baseUrl={`/search/${topic}`}
+          />
+        </div>
+      )}
+    </>
+  );
 }
 

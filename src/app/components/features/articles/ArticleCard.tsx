@@ -96,7 +96,7 @@ export default function ArticleCard({
 
   return (
     <>
-      <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300 bg-white">
+      <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300 bg-white hover:shadow-md transition-shadow">
         <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
           {topics && topics.length > 0 && (
             <div className="flex flex-nowrap gap-2 mb-2">

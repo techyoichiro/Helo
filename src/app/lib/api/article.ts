@@ -39,22 +39,30 @@ export async function fetchArticles(
 /* ================================================================
    2. トピック別記事一覧
 ================================================================ */
-export async function fetchArticlesByTopic(topic: string): Promise<ArticleResponseOrError> {
+export async function fetchArticlesByTopic(
+  topic: string,
+  page: number = 1,
+  perPage: number = 10
+): Promise<ArticleResponseOrError> {
   try {
     const response = await client.api.articles[':topic'].$get({
       param: {
         topic: topic
+      },
+      query: {
+        page: page.toString(),
+        perPage: perPage.toString()
       }
-    });
+    } as any);
 
     if (!response.ok) {
       return { error: 'Failed to fetch articles' };
     }
 
-    const data = await response.json() as Article[];
+    const data = await response.json() as { articles: Article[], total: number };
     return {
-      articles: data,
-      total: data.length
+      articles: data.articles,
+      total: data.total
     };
   } catch (error) {
     console.error(`Failed to fetch articles for topic ${topic}:`, error);
@@ -98,20 +106,26 @@ export async function fetchTrendArticles(): Promise<ArticleResponseOrError> {
 /* ================================================================
    4. 最新記事
 ================================================================ */
-export async function fetchLatestArticles(): Promise<ArticleResponseOrError> {
+export async function fetchLatestArticles(
+  page: number = 1,
+  perPage: number = 10
+): Promise<ArticleResponseOrError> {
   try {
     const response = await client.api.articles.latest.$get({
-      next: { revalidate: REVALIDATE_TIME },
-    });
+      query: {
+        page: page.toString(),
+        perPage: perPage.toString()
+      }
+    } as any);
     
     if (!response.ok) {
       return { error: 'Failed to fetch articles' };
     }
 
-    const data = await response.json() as Article[];
+    const data = await response.json() as { articles: Article[], total: number };
     return {
-      articles: data,
-      total: data.length
+      articles: data.articles,
+      total: data.total
     };
   } catch (error) {
     console.error('Error fetching latest articles:', error);

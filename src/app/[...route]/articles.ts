@@ -22,7 +22,10 @@ const fetchQiitaPosts = async (url: string): Promise<Article[]> => {
     };
 
     try {
-        const res = await fetch(url, { headers });
+        const res = await fetch(url, { 
+            headers,
+            next: { revalidate: 3600 } // 1時間のキャッシュ
+        });
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -80,7 +83,9 @@ const getQiitaLatestPosts = async (): Promise<Article[]> => {
 
 // Zennから記事を取得
 const fetchZennData = async (url: string) => {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+        next: { revalidate: 3600 } // 1時間のキャッシュ
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch Zenn posts');
     }
@@ -138,14 +143,41 @@ const app = new Hono()
     // 最新記事取得
     .get('/latest', async (c) => {
         try {
-            const [zennPosts, qiitaPosts] = await Promise.all([
+            const page = parseInt(c.req.query('page') || '1')
+            const perPage = parseInt(c.req.query('perPage') || '10')
+
+            console.time('Fetch latest posts');
+            const [zennPosts, qiitaPosts] = await Promise.allSettled([
                 getZennPostsWithDetails(`${ZENN_URL}/api/articles?order=latest`),
                 getQiitaLatestPosts(),
             ]);
-            const allPosts = [...zennPosts, ...qiitaPosts];
+
+            const allPosts = [
+                ...(zennPosts.status === 'fulfilled' ? zennPosts.value : []),
+                ...(qiitaPosts.status === 'fulfilled' ? qiitaPosts.value : [])
+            ];
+            console.timeEnd('Fetch latest posts');
+
+            if (allPosts.length === 0) {
+                return c.json({ error: 'No articles found' }, 404);
+            }
+
             // 日付順にソート (降順: 最新順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
-            return c.json(sortedPosts);
+            
+            // ページネーション処理
+            const startIndex = (page - 1) * perPage
+            const endIndex = startIndex + perPage
+            const paginatedPosts = sortedPosts.slice(startIndex, endIndex)
+
+            if (startIndex >= sortedPosts.length) {
+                return c.json({ error: 'Requested range not satisfiable' }, 416)
+            }
+
+            return c.json({
+                articles: paginatedPosts,
+                total: sortedPosts.length
+            });
         } catch (error) {
             console.error('Failed to fetch latest posts:', error);
             return c.json({ error: 'Failed to fetch latest posts' }, 500);
@@ -153,14 +185,50 @@ const app = new Hono()
     })
     
     .get('/:topic', zValidator('param', schema), async (c) => {
+        const startTime = performance.now();
         try {
             const { topic } = c.req.valid('param')
-            const zennPosts = await getZennPostsWithDetails(`${ZENN_URL}/api/articles?topicname=${topic}`);
-            const qiitaPosts = await getQiitaPostsByTags(topic);
-            const allPosts = [...zennPosts, ...qiitaPosts];
+            const page = parseInt(c.req.query('page') || '1')
+            const perPage = parseInt(c.req.query('perPage') || '10')
+
+            console.time('Fetch all posts');
+            // ZennとQiitaの記事を並行して取得
+            const [zennPosts, qiitaPosts] = await Promise.allSettled([
+                getZennPostsWithDetails(`${ZENN_URL}/api/articles?topicname=${topic}`),
+                getQiitaPostsByTags(topic)
+            ]);
+
+            const allPosts = [
+                ...(zennPosts.status === 'fulfilled' ? zennPosts.value : []),
+                ...(qiitaPosts.status === 'fulfilled' ? qiitaPosts.value : [])
+            ];
+            console.timeEnd('Fetch all posts');
+            
+            if (allPosts.length === 0) {
+                return c.json({ error: 'No articles found' }, 404);
+            }
+            
+            console.time('Sort and paginate');
             // 日付順にソート (降順: 最新順)
             const sortedPosts = allPosts.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
-            return c.json(sortedPosts);
+            
+            // ページネーション処理
+            const startIndex = (page - 1) * perPage
+            const endIndex = startIndex + perPage
+            const paginatedPosts = sortedPosts.slice(startIndex, endIndex)
+            console.timeEnd('Sort and paginate');
+
+            if (startIndex >= sortedPosts.length) {
+                return c.json({ error: 'Requested range not satisfiable' }, 416)
+            }
+
+            const endTime = performance.now();
+            console.log(`Total processing time: ${endTime - startTime}ms`);
+
+            return c.json({
+                articles: paginatedPosts,
+                total: sortedPosts.length
+            });
         } catch (error) {
             console.error('Failed to fetch posts:', error);
             return c.json({ error: 'Failed to fetch posts' }, 500);

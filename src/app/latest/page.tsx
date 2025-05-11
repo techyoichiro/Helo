@@ -1,33 +1,84 @@
-import { ContentWrapper } from '@/app/components/layouts/ContentWrapper';
-import ArticleList from '@/app/components/features/articles/ArticleList';
-import { Tabs } from "@/app/components/layouts/Tabs"
-import { fetchLatestArticles } from '../lib/api/article';
-import { ArticleListSkeleton } from "@/app/components/features/articles/ArticleListSkeleton"
-import { Suspense } from 'react';
+import { Suspense } from "react";
+import ArticleList from "@/app/components/features/articles/ArticleList";
+import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
+import { PageSEO } from "@/app/components/layouts/PageSEO";
 import { isErrorResponse } from '@/app/types/article';
+import { fetchLatestArticles } from "@/app/lib/api/article";
+import { Pagination } from "@/app/components/common/pagination";
 
-export default async function Page() {
-  const items = await fetchLatestArticles();
-  const tabItems = [
-    { href: "/", title: "トレンド" },
-    { href: "/latest", title: "最新" },
-  ]
+interface LatestArticlesPageProps {
+  searchParams: { page?: string }
+}
+
+export default async function LatestArticlesPage({ searchParams }: LatestArticlesPageProps) {
+  const page = Number(searchParams.page) || 1;
+  const perPage = 10;
 
   return (
-    <ContentWrapper>
-      {/* タブ */}
-      <Tabs items={tabItems} className="mb-4" />
-      <div className="w-full max-w-4xl">
-        <Suspense fallback={<ArticleListSkeleton />}>
-          {isErrorResponse(items) ? (
-            <div className="text-center py-10">
-              <p className="text-red-500">{items.error}</p>
-            </div>
-          ) : (
-            <ArticleList items={items.articles} />
-          )}
-        </Suspense>
+    <>
+      <PageSEO
+        title="Latest Articles"
+        description="Browse the latest articles from Zenn and Qiita"
+        path="/latest"
+      />
+
+      <ContentWrapper>
+        <div className="py-10">
+          <h1 className="text-4xl font-bold mb-6">新着記事</h1>
+          <Suspense
+            fallback={
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className="space-y-4">
+                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }
+          >
+            <LatestArticlesContent page={page} perPage={perPage} />
+          </Suspense>
+        </div>
+      </ContentWrapper>
+    </>
+  );
+}
+
+async function LatestArticlesContent({ 
+  page, 
+  perPage 
+}: { 
+  page: number;
+  perPage: number;
+}) {
+  const articlesOrError = await fetchLatestArticles(page, perPage);
+
+  if (isErrorResponse(articlesOrError)) {
+    console.error(articlesOrError.error);
+    return (
+      <div className="py-20 text-center font-bold text-lg text-red-500">
+        {articlesOrError.error}
       </div>
-    </ContentWrapper>
+    );
+  }
+
+  const totalPages = Math.ceil(articlesOrError.total / perPage);
+
+  return (
+    <>
+      <ArticleList items={articlesOrError.articles} />
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            baseUrl="/latest"
+          />
+        </div>
+      )}
+    </>
   );
 }
