@@ -6,12 +6,14 @@ import { isErrorResponse } from '@/app/types/article';
 import { fetchLatestArticles } from "@/app/lib/api/article";
 import { Pagination } from "@/app/components/common/pagination";
 
-interface LatestArticlesPageProps {
-  searchParams: { page?: string }
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  params: Promise<{ [key: string]: string }>
 }
 
-export default async function LatestArticlesPage({ searchParams }: LatestArticlesPageProps) {
-  const page = Number(searchParams.page) || 1;
+export default async function LatestArticlesPage({ searchParams }: Props) {
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams.page) || 1;
   const perPage = 10;
 
   return (
@@ -24,7 +26,7 @@ export default async function LatestArticlesPage({ searchParams }: LatestArticle
 
       <ContentWrapper>
         <div className="py-10">
-          <h1 className="text-4xl font-bold mb-6">新着記事</h1>
+          <h1 className="text-4xl font-bold mb-6">Latest Articles</h1>
           <Suspense
             fallback={
               <div className="space-y-6">

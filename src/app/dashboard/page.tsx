@@ -1,22 +1,20 @@
 import dynamic from 'next/dynamic'
 import { fetchBookmarks } from '@/app/lib/api/bookmark'
-import { createClient }   from '@/app/lib/supabase/server'
-import AddBookmarkForm from '@/app/components/features/bookmarks/AddBookmarkForm'
+import { createClient } from '@/app/lib/supabase/server'
 
 const BookMarkList = dynamic(() => import('@/app/components/features/bookmarks/BookMarkList'), {
   loading: () => <p>読み込み中...</p>
 })
 
+const AddBookmarkForm = dynamic(() => import('@/app/components/features/bookmarks/AddBookmarkForm'), {
+  loading: () => <p>フォームを読み込み中...</p>
+})
+
 export default async function BookmarksPage() {
-  /* ────────── Supabase (Server) ────────── */
   const supabase = await createClient()
+  const { data: { session }, error: sessErr } = await supabase.auth.getSession()
 
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabase.auth.getUser()
-
-  if (userErr || !user) {
+  if (sessErr || !session?.access_token) {
     return (
       <div className="py-10 text-center text-red-500">
         ログインが必要です
@@ -24,21 +22,6 @@ export default async function BookmarksPage() {
     )
   }
 
-  /* 2. アクセストークンを取得 */
-  const {
-    data: { session },
-    error: sessErr,
-  } = await supabase.auth.getSession()
-
-  if (sessErr || !session?.access_token) {
-    return (
-      <div className="py-10 text-center text-red-500">
-        セッションの取得に失敗しました
-      </div>
-    )
-  }
-
-  /* 3. Edge API からブックマークを取得 */
   const { data: bookmarks, error: bmErr } = await fetchBookmarks({
     access_token: session.access_token,
   })
@@ -52,12 +35,10 @@ export default async function BookmarksPage() {
     )
   }
 
-  /* ────────── UI ────────── */
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">ブックマーク一覧</h1>
 
-      {/* URL 直登録フォーム */}
       <AddBookmarkForm session={{ access_token: session.access_token }} />
 
       <div className="h-[calc(100vh-6rem)] py-4">

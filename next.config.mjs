@@ -46,6 +46,19 @@ const nextConfig = {
     };
     return config;
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000', 'your-production-domain.com'],
+      bodySizeLimit: '2mb'
+    }
+  },
+  // キャッシュミドルウェアの設定
+  onDemandEntries: {
+    // ページのキャッシュ時間（ミリ秒）
+    maxInactiveAge: 25 * 1000,
+    // 同時に保持するページ数
+    pagesBufferLength: 2,
+  }
 };
 
 export default nextConfig; 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { BookmarkIcon } from "@heroicons/react/24/outline"
+import { Bookmark } from "lucide-react"
 import { client } from '@/app/lib/hono/hono';
 import { useRouter } from "next/navigation"
 import { z } from "zod"
@@ -83,7 +83,7 @@ export default function AddBookmarkForm({ session }: AddBookmarkFormProps) {
           {isLoading ? (
             "追加中..."
           ) : (
-            <BookmarkIcon className="h-5 w-5 text-white" aria-label="ブックマークを追加" />
+            <Bookmark className="h-5 w-5 text-white" aria-label="ブックマークを追加" />
           )}
         </button>
       </div>
