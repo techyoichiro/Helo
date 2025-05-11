@@ -40,10 +40,6 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
     router.push('/dashboard')
   }
 
-  const handleProfile = async () => {
-    router.push('/dashboard/profile')
-  }
-
   const handleSetting = async () => {
     router.push('/dashboard/settings')
   }
@@ -85,7 +81,6 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
             <DropdownMenuContent className="w-56" align="end">
               <DropdownMenuLabel>{fullName || email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleProfile}>プロフィール</DropdownMenuItem>
               <DropdownMenuItem onClick={handleDashboard}>ブックマーク</DropdownMenuItem>
               <DropdownMenuItem onClick={handleSetting}>設定</DropdownMenuItem>
               <DropdownMenuItem onClick={handleGuide}>ガイドとヘルプ</DropdownMenuItem>

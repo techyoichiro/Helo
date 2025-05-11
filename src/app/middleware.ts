@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
     if (!session && !request.nextUrl.pathname.startsWith('/auth')) {
       const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = '/login'
+      redirectUrl.pathname = '/'
       return NextResponse.redirect(redirectUrl)
     }
 
