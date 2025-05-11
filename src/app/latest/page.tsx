@@ -29,7 +29,7 @@ export default async function LatestArticlesPage({ searchParams }: Props) {
 
       <ContentWrapper>
         <div className="py-10">
-          <h1 className="text-4xl font-bold mb-6">Latest Articles</h1>
+          <h1 className="text-4xl font-bold mb-6">最新記事</h1>
           <Suspense
             fallback={
               <div className="space-y-6">

@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -8,24 +8,23 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        async getAll() {
-          const allCookies = await cookieStore.getAll()
-          return allCookies.map(cookie => ({
-            name: cookie.name,
-            value: cookie.value,
-          }))
+        get(name: string) {
+          return cookieStore.get(name)?.value
         },
-        async setAll(cookiesToSet) {
-          for (const { name, value, options } of cookiesToSet) {
-            await cookieStore.set(name, value, options)
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set(name, value, options)
+          } catch (error) {
+            // クッキーの設定に失敗した場合は無視
           }
         },
-      },
-      auth: {
-        flowType: 'pkce',
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        persistSession: true,
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set(name, '', { ...options, maxAge: 0 })
+          } catch (error) {
+            // クッキーの削除に失敗した場合は無視
+          }
+        },
       },
     }
   )
