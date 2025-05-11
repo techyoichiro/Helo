@@ -252,11 +252,14 @@ export async function addBookmarkToFolder(
    ヘルパ
 ================================================================ */
 async function fail(res: Response): Promise<{ error: string }> {
-  let msg = 'Unexpected error'
+  let msg = 'API error'
   try {
     const json = await res.json()
     msg = json.error ?? msg
   } catch {}
-  console.error('API error', res.status, msg)
+  // 404エラーは正常なケースとして扱う
+  if (res.status !== 404) {
+    console.error('API error', res.status, msg)
+  }
   return { error: msg }
 }

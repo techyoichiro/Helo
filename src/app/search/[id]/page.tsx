@@ -7,6 +7,9 @@ import { isErrorResponse, TopicArticlesPageProps } from '@/app/types/article';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/common/avatar";
 import { fetchArticlesByTopic } from "@/app/lib/api/article";
 import { Pagination } from "@/app/components/common/pagination";
+import { createClient } from '@/app/lib/supabase/server';
+import { fetchBookmarks } from '@/app/lib/api/bookmark';
+import { BookmarkDTO } from '@/app/types/bookmark';
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const resolvedParams = await params;
@@ -69,7 +72,17 @@ async function ArticleListContent({
   page: number;
   perPage: number;
 }) {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
   const articlesOrError = await fetchArticlesByTopic(topic, page, perPage);
+  let bookmarks: BookmarkDTO[] = []
+
+  if (session?.access_token) {
+    const { data } = await fetchBookmarks({ access_token: session.access_token })
+    if (data) {
+      bookmarks = data.bookmarks
+    }
+  }
 
   if (isErrorResponse(articlesOrError)) {
     console.error(articlesOrError.error);
@@ -84,7 +97,11 @@ async function ArticleListContent({
 
   return (
     <>
-      <ArticleList items={articlesOrError.articles} />
+      <ArticleList 
+        items={articlesOrError.articles} 
+        bookmarks={bookmarks}
+        session={session}
+      />
       {totalPages > 1 && (
         <div className="mt-8">
           <Pagination

@@ -65,7 +65,6 @@ export function ArticleListClient({ session }: ArticleListClientProps) {
         <ArticleCard 
           key={`${article.url}-${article.published_at}`} 
           item={article} 
-          user={null} 
           session={session} 
         />
       ))}

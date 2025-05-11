@@ -23,12 +23,10 @@ function getFaviconSrcFromOrigin(hostname: string) {
 export default function ArticleCard({
   item,
   initialIsBookmarked = false,
-  user,
+  bookmarkId: initialBookmarkId,
   session,
-}: ArticleCardProps & {
-  user?: any;
-}) {
-  const [bookmarkId, setBookmarkId] = useState<string | null>(null)
+}: ArticleCardProps) {
+  const [bookmarkId, setBookmarkId] = useState<string | null>(initialBookmarkId || null)
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
@@ -41,27 +39,18 @@ export default function ArticleCard({
   const handleBookmarkAction = async (e: React.MouseEvent) => {
     e.stopPropagation()
     
-    // ユーザーが存在しない場合のみログインダイアログを表示
-    if (!user) {
+    if (!session) {
       setIsLoginDialogOpen(true)
       return
     }
 
     setIsBookmarking(true)
     try {
-      const supabase = createBrowserSupabase()
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-      
-      if (!currentSession) {
-        setIsLoginDialogOpen(true)
-        return
-      }
-
       if (isBookmarked && bookmarkId) {
-        await deleteBookmark(currentSession, bookmarkId)
+        await deleteBookmark(session, bookmarkId)
         setBookmarkId(null)
       } else {
-        const response = await addBookmark(currentSession, {
+        const response = await addBookmark(session, {
           title,
           articleUrl: url,
           ogImageUrl: og_image_url ?? "",

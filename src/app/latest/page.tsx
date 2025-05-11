@@ -5,6 +5,9 @@ import { PageSEO } from "@/app/components/layouts/PageSEO";
 import { isErrorResponse } from '@/app/types/article';
 import { fetchLatestArticles } from "@/app/lib/api/article";
 import { Pagination } from "@/app/components/common/pagination";
+import { createClient } from '@/app/lib/supabase/server';
+import { fetchBookmarks } from '@/app/lib/api/bookmark';
+import { BookmarkDTO } from '@/app/types/bookmark';
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -56,7 +59,17 @@ async function LatestArticlesContent({
   page: number;
   perPage: number;
 }) {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
   const articlesOrError = await fetchLatestArticles(page, perPage);
+  let bookmarks: BookmarkDTO[] = []
+
+  if (session?.access_token) {
+    const { data } = await fetchBookmarks({ access_token: session.access_token })
+    if (data) {
+      bookmarks = data.bookmarks
+    }
+  }
 
   if (isErrorResponse(articlesOrError)) {
     console.error(articlesOrError.error);
@@ -71,7 +84,11 @@ async function LatestArticlesContent({
 
   return (
     <>
-      <ArticleList items={articlesOrError.articles} />
+      <ArticleList 
+        items={articlesOrError.articles} 
+        bookmarks={bookmarks}
+        session={session}
+      />
       {totalPages > 1 && (
         <div className="mt-8">
           <Pagination
