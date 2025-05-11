@@ -26,10 +26,10 @@ export default async function Header() {
           </div>
 
           {/* Right side items */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             {/* Search */}
             <Link href="/search">
-              <Button variant="ghost" size="icon" className="hidden sm:flex">
+              <Button variant="ghost" size="icon">
                 <Search className="h-5 w-5 text-gray-800"/>
               </Button>
             </Link>

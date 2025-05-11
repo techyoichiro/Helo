@@ -61,12 +61,12 @@ export function HeaderActionsClient({ initialUser }: HeaderActionsClientProps) {
     <>
       {initialUser ? (
         <><Link href="/dashboard">
-          <Button variant="ghost" size="icon" className="hidden sm:flex">
+          <Button variant="ghost" size="icon">
             <Bookmark className="h-5 w-5 text-gray-800" />
           </Button>
         </Link><DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full ml-4">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full sm:ml-4">
                 <Avatar>
                   {avatarUrl ? (
                     <AvatarImage src={avatarUrl} alt="プロフィール" />

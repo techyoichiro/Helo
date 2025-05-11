@@ -112,49 +112,55 @@ export default function BookmarkListClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <select
-          value={selected?.id ?? viewMode}
-          onChange={(e) => {
-            const value = e.target.value
-            if (value === 'all') {
-              setSelected(null)
-              setViewMode('all')
-              setPage(1)
-              setBookmarks([])
-            } else if (value === 'unclassified') {
-              setSelected(null)
-              setViewMode('unclassified')
-              setPage(1)
-              setBookmarks([])
-            } else {
-              const folder = folderList.find((f) => f.id === Number(value))
-              setSelected(folder ?? null)
-              setViewMode('all')
-              setPage(1)
-              setBookmarks([])
-            }
-          }}
-          className="rounded-md border px-3 py-2"
-        >
-          <option value="all">すべて</option>
-          {folderList.length > 0 && (
-            <option value="unclassified">未分類</option>
-          )}
-          {folderList.map((folder) => (
-            <option key={folder.id} value={folder.id}>
-              {folder.name}
-            </option>
-          ))}
-        </select>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-full sm:w-64">
+            <select
+              value={selected?.id ?? viewMode}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === 'all') {
+                  setSelected(null)
+                  setViewMode('all')
+                  setPage(1)
+                  setBookmarks([])
+                } else if (value === 'unclassified') {
+                  setSelected(null)
+                  setViewMode('unclassified')
+                  setPage(1)
+                  setBookmarks([])
+                } else {
+                  const folder = folderList.find((f) => f.id === Number(value))
+                  setSelected(folder ?? null)
+                  setViewMode('all')
+                  setPage(1)
+                  setBookmarks([])
+                }
+              }}
+              className="w-full rounded-md border px-3 py-2 bg-white"
+            >
+              <option value="all">すべて</option>
+              {folderList.length > 0 && (
+                <option value="unclassified">未分類</option>
+              )}
+              {folderList.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <FolderActions
-          selected={selected}
-          folderList={folderList}
-          setFolderList={setFolderList}
-          setSelected={setSelected}
-          session={session}
-        />
+          <div className="flex gap-2">
+            <FolderActions
+              selected={selected}
+              folderList={folderList}
+              setFolderList={setFolderList}
+              setSelected={setSelected}
+              session={session}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
