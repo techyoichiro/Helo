@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
 import ArticleList from "@/app/components/features/articles/ArticleList";
 import { ContentWrapper } from "@/app/components/layouts/ContentWrapper";
 import { PageSEO } from "@/app/components/layouts/PageSEO";
@@ -10,6 +9,9 @@ import { Pagination } from "@/app/components/common/pagination";
 import { createClient } from '@/app/lib/supabase/server';
 import { fetchBookmarks } from '@/app/lib/api/bookmark';
 import { BookmarkDTO } from '@/app/types/bookmark';
+
+// キャッシュの設定
+export const revalidate = 60; // 60秒間キャッシュ
 
 export default async function TopicArticlesPage({ params, searchParams }: TopicArticlesPageProps) {
   const resolvedParams = await params;
@@ -72,15 +74,20 @@ async function ArticleListContent({
   page: number;
   perPage: number;
 }) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const articlesOrError = await fetchArticlesByTopic(topic, page, perPage);
-  let bookmarks: BookmarkDTO[] = []
+  // 並列でデータを取得
+  const [supabase, articlesOrError] = await Promise.all([
+    createClient(),
+    fetchArticlesByTopic(topic, page, perPage)
+  ]);
 
+  const { data: { session } } = await supabase.auth.getSession();
+  let bookmarks: BookmarkDTO[] = [];
+
+  // セッションがある場合のみブックマークを取得
   if (session?.access_token) {
-    const { data } = await fetchBookmarks({ access_token: session.access_token })
+    const { data } = await fetchBookmarks({ access_token: session.access_token });
     if (data) {
-      bookmarks = data.bookmarks
+      bookmarks = data.bookmarks;
     }
   }
 
