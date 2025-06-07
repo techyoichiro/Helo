@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@/app/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   // 環境変数の存在チェック
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || !process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY || !process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Supabase or Stripe env missing' }, { status: 500 });
   }
 
@@ -35,8 +35,11 @@ export async function POST(request: Request) {
       console.error('user_id not found in session metadata');
       return NextResponse.json({ error: 'user_id not found' }, { status: 400 });
     }
-    // Supabaseでsubscription_statusをpremiumに更新
-    const supabase = await createClient();
+    // Supabaseでsubscription_statusをpremiumに更新（Service Roleキー使用）
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!
+    );
     const { error } = await supabase
       .from('users')
       .update({ subscription_status: 'premium' })
