@@ -6,7 +6,7 @@ import { Badge } from "@/app/components/common/badge"
 import { createBrowserSupabase } from '@/app/lib/supabase/client'
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ export function SettingsClient({ initialUser, count }: ProfileClientProps) {
   const [isUnlinking, setIsUnlinking] = useState<string | null>(null)
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
   const avatarUrl = initialUser?.avatarUrl || null
   const fullName = initialUser?.fullName || null
   const providers = initialUser?.providers || []
@@ -87,7 +88,11 @@ export function SettingsClient({ initialUser, count }: ProfileClientProps) {
   const handleStripeCheckout = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/stripe/create-checkout-session', { method: 'POST' })
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnTo: pathname })
+      })
       const data = await res.json()
       if (!data.url) throw new Error('Checkout URLが取得できませんでした')
       // Stripe Checkoutにリダイレクト

@@ -14,6 +14,8 @@ export async function POST(request: Request) {
   });
 
   try {
+    // POST bodyからreturnToを取得
+    const { returnTo } = await request.json();
     // Supabase認証ユーザー取得
     const supabase = await createClient();
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
@@ -21,6 +23,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     // Checkoutセッション作成
+    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/success?returnTo=${encodeURIComponent(returnTo || '/')}`;
+    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/cancel?returnTo=${encodeURIComponent(returnTo || '/')}`;
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -36,8 +40,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cancel`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         user_id: user.id,
       },
