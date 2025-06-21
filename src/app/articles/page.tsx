@@ -5,6 +5,8 @@ import { createClient } from '@/app/lib/supabase/server'
 import { fetchBookmarks } from '@/app/lib/api/bookmark'
 import { BookmarkDTO } from '@/app/types/bookmark'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Articles() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()

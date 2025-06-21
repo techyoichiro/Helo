@@ -2,6 +2,8 @@
 import { createClient }         from '@/app/lib/supabase/server'
 import { HeaderActionsClient }  from './HeaderActionsClient'
 
+export const dynamic = 'force-dynamic'
+
 export async function HeaderActionsServer() {
   /* ────────── Supabase Server Client ────────── */
   const supabase = await createClient()
