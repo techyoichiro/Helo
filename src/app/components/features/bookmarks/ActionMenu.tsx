@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { BookmarkIcon, PlusIcon, TrashIcon } from "lucide-react"
 import {
   Popover,
@@ -15,6 +15,7 @@ import {
   deleteBookmark,
 } from "@/app/lib/api/bookmark"
 import { FolderDTO, SessionProp } from "@/app/types/bookmark"
+import { UpgradeModal } from "./UpgradeModal"
 
 /* -------- Props -------- */
 interface ActionMenuProps {
@@ -22,6 +23,7 @@ interface ActionMenuProps {
   session: SessionProp
   folders: FolderDTO[]
   onBookmarkUpdate?: () => Promise<void>
+  onFoldersChanged?: () => void
 }
 
 export default function ActionMenu({
@@ -29,11 +31,21 @@ export default function ActionMenu({
   session,
   folders,
   onBookmarkUpdate,
+  onFoldersChanged,
 }: ActionMenuProps) {
-  const [list, setList] = useState<FolderDTO[]>(folders)
   const [newFolderName, setNewFolderName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [activeFolderId, setActiveFolderId] = useState<number | null>(null)
+  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+
+  useEffect(() => {
+    // Premium状態を取得
+    fetch('/api/user/subscription', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => setIsSubscribed(data.isSubscribed ?? false))
+      .catch(() => setIsSubscribed(false))
+  }, [])
 
   /* ---------- ハンドラ ---------- */
   const handleDeleteBookmark = async () => {
@@ -63,6 +75,11 @@ export default function ActionMenu({
 
   const handleCreateFolder = async () => {
     if (!newFolderName) return
+
+    if (isSubscribed === false && folders.length >= 3) {
+      setUpgradeOpen(true)
+      return
+    }
     
     try {
       setIsLoading(true)
@@ -71,11 +88,8 @@ export default function ActionMenu({
         console.error(res.error)
         return
       }
-
-      if (res.data) {
-        setList((prev) => [...prev, res.data as FolderDTO])
         setNewFolderName("")
-      }
+      onFoldersChanged?.()
     } catch (error) {
       console.error('Failed to create folder:', error)
     } finally {
@@ -85,70 +99,73 @@ export default function ActionMenu({
 
   /* ---------- UI ---------- */
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button 
-          className="bookmark-button flex items-center justify-center
-                     h-10 w-10 rounded-full bg-orange-50 hover:bg-orange-100
-                     transition-colors"
-          disabled={isLoading}
-        >
-          <BookmarkIcon className="text-orange-500 fill-orange-500" />
-        </Button>
-      </PopoverTrigger>
-
-      <PopoverContent
-        className="w-64 space-y-2"
-        onClick={(e) => e.stopPropagation()}   /* カードへの伝播を防止 */
-      >
-        {/* ─ ブックマーク削除 ─ */}
-        <Button
-          variant="destructive"
-          className="w-full justify-start"
-          onClick={handleDeleteBookmark}
-          disabled={isLoading}
-        >
-          <TrashIcon className="h-4 w-4 mr-2" />
-          {isLoading ? '削除中...' : '削除'}
-        </Button>
-
-        {/* ─ 既存フォルダへ追加 ─ */}
-        <div>
-          <p className="text-sm mb-2">フォルダに追加</p>
-          <div className="grid gap-2">
-            {list.map((f) => (                      /* ★ list を描画 */
-              <Button
-                key={f.id}
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => handleAddToFolder(f.id)}
-                disabled={isLoading || activeFolderId === f.id}
-              >
-                <BookmarkIcon className="h-4 w-4 mr-2" />
-                {activeFolderId === f.id ? '追加中...' : f.name}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* ─ 新規フォルダ作成 ─ */}
-        <div className="pt-4 border-t mt-2">
-          <Input
-            placeholder="新しいフォルダ名"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button 
+            className="bookmark-button flex items-center justify-center
+                       h-10 w-10 rounded-full bg-orange-50 hover:bg-orange-100
+                       transition-colors"
             disabled={isLoading}
-          />
-          <Button
-            className="w-full mt-2"
-            onClick={handleCreateFolder}
-            disabled={!newFolderName || isLoading}
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            {isLoading ? '作成中...' : 'フォルダ作成'}
+            <BookmarkIcon className="text-orange-500 fill-orange-500" />
           </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+
+        <PopoverContent
+          className="w-64 space-y-2"
+          onClick={(e) => e.stopPropagation()}   /* カードへの伝播を防止 */
+        >
+          {/* ─ ブックマーク削除 ─ */}
+          <Button
+            variant="destructive"
+            className="w-full justify-start"
+            onClick={handleDeleteBookmark}
+            disabled={isLoading}
+          >
+            <TrashIcon className="h-4 w-4 mr-2" />
+            {isLoading ? '削除中...' : '削除'}
+          </Button>
+
+          {/* ─ 既存フォルダへ追加 ─ */}
+          <div>
+            <p className="text-sm mb-2">フォルダに追加</p>
+            <div className="grid gap-2">
+              {folders.map((f) => (
+                <Button
+                  key={f.id}
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleAddToFolder(f.id)}
+                  disabled={isLoading || activeFolderId === f.id}
+                >
+                  <BookmarkIcon className="h-4 w-4 mr-2" />
+                  {activeFolderId === f.id ? '追加中...' : f.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* ─ 新規フォルダ作成 ─ */}
+          <div className="pt-4 border-t mt-2">
+            <Input
+              placeholder="新しいフォルダ名"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              disabled={isLoading}
+            />
+            <Button
+              className="w-full mt-2"
+              onClick={handleCreateFolder}
+              disabled={!newFolderName || isLoading}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              {isLoading ? '作成中...' : 'フォルダ作成'}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <UpgradeModal isOpen={upgradeOpen} onOpenChange={setUpgradeOpen} />
+    </>
   )
 }

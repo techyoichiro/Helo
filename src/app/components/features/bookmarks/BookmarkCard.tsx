@@ -22,6 +22,7 @@ export default function BookmarkCard({
   session,
   folders,
   onBookmarkUpdate,
+  onBookmarkRemove,
 }: BookmarkCardProps) {
   const { title, articleUrl, ogImageUrl } = item
   const { hostname, origin } = new URL(articleUrl)

@@ -16,10 +16,11 @@ export interface FolderActionsProps {
   setFolderList: (folders: FolderDTO[]) => void
   setSelected: (f: FolderDTO | null) => void
   session: SessionProp
+  onFoldersChanged?: () => void
 }
 
 export default function FolderActions({
-  selected, folderList, setFolderList, setSelected, session
+  selected, folderList, setFolderList, setSelected, session, onFoldersChanged
 }: FolderActionsProps) {
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -33,6 +34,7 @@ export default function FolderActions({
         folderList.map(f => f.id === selected.id ? { ...f, name: newName } : f)
       )
       setRenameOpen(false)
+      onFoldersChanged?.()
     }
   }
 
@@ -43,6 +45,7 @@ export default function FolderActions({
       setFolderList(folderList.filter(f => f.id !== selected.id))
       setSelected(null)
       setDeleteOpen(false)
+      onFoldersChanged?.()
     }
   }
 

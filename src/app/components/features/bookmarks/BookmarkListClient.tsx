@@ -101,6 +101,12 @@ export default function BookmarkListClient({
     loadFolders()
   }, [session])
 
+  // フォルダ一覧を再取得する関数
+  const handleFoldersChanged = useCallback(async () => {
+    const res = await fetchFolders(session)
+    if (res.data) setFolderList(res.data)
+  }, [session])
+
   // ブックマークの取得（初期表示時と依存関係が変更された時）
   useEffect(() => {
     if (page === 1) {
@@ -158,6 +164,7 @@ export default function BookmarkListClient({
               setFolderList={setFolderList}
               setSelected={setSelected}
               session={session}
+              onFoldersChanged={handleFoldersChanged}
             />
           </div>
         </div>
