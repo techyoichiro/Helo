@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Image from "next/image"
-import { Bookmark } from 'lucide-react'
+import { Bookmark, ExternalLink, Sparkles } from 'lucide-react'
 import { ArticleCardProps } from "@/app/types/article"
 import dayjs from "dayjs"
 import "dayjs/locale/ja";
@@ -74,19 +74,23 @@ export default function ArticleCard({
     }
   }
 
-  // 記事部分をクリック→新規タブで開く
-  const handleCardClick = (e: React.MouseEvent) => {
-    // ブックマークボタンのクリックだった場合は遷移しない
-    if ((e.target as HTMLElement).closest('.bookmark-button')) {
-      return
-    }
+  // AI要約ボタンのハンドラー
+  const handleAISummary = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    // TODO: AI要約機能の実装
+    console.log('AI要約機能は実装予定です')
+  }
+
+  // 外部リンク遷移ボタンのハンドラー
+  const handleExternalLink = (e: React.MouseEvent) => {
+    e.stopPropagation()
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
     <>
       <article className="rounded-lg overflow-hidden mb-4 w-full md:w-[calc(50%-0.5rem)] border border-gray-300 bg-white hover:shadow-md transition-shadow">
-        <div className="px-4 mt-4 cursor-pointer" onClick={handleCardClick}>
+        <div className="px-4 mt-4">
           {topics && topics.length > 0 && (
             <div className="flex flex-nowrap gap-2 mb-2">
               {topics.map((topic, index) => (
@@ -100,7 +104,7 @@ export default function ArticleCard({
             </div>
           )}
 
-          <div className="flex justify-between gap-4 mb-2">
+          <div className="flex justify-between gap-4 mb-3">
             <h2 className="text-lg font-medium flex-1 line-clamp-3">{title}</h2>
             {og_image_url && (
               <div className="relative hidden sm:block w-[160px] h-[90px]">
@@ -115,37 +119,68 @@ export default function ArticleCard({
               </div>
             )}
           </div>
+
+          {/* 投稿日時とサイト情報を上に移動 */}
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <div className="flex items-center">
+              <Image
+                src={getFaviconSrcFromOrigin(origin)}
+                width={14}
+                height={14}
+                className="rounded-sm mr-1"
+                alt={displayHostname}
+              />
+              {displayHostname}
+            </div>
+            <time dateTime={published_at}>
+              <p>{dayjs(published_at).fromNow()}に投稿</p>
+            </time>
+          </div>
         </div>
 
-        <div className="px-4 mb-4">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center text-gray-400">
-                <Image
-                  src={getFaviconSrcFromOrigin(origin)}
-                  width={14}
-                  height={14}
-                  className="rounded-sm mr-1"
-                  alt={displayHostname}
-                />
-                {displayHostname}
-              </div>
-              <time dateTime={published_at} className="text-gray-400">
-                <p>{dayjs(published_at).fromNow()}に投稿</p>
-              </time>
-            </div>
-
-            <div className="flex items-center gap-4 text-gray-400">
+        {/* カード下部のボタン群 */}
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* ブックマークボタン */}
               <button
                 onClick={handleBookmarkAction}
-                className={`flex items-center gap-1 bookmark-button ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border ${
+                  isBookmarked 
+                    ? 'border-orange-300 text-orange-600 hover:border-orange-400' 
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                } ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={isBookmarking}
+                title={isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加'}
               >
                 <Bookmark
-                  className={`w-4 h-4 ${isBookmarked ? 'text-orange-500 fill-orange-500' : ''}`}
+                  className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`}
                 />
+                <span className="hidden sm:inline">
+                  {isBookmarked ? '解除' : '保存'}
+                </span>
+              </button>
+
+              {/* AI要約ボタン */}
+              <button
+                onClick={handleAISummary}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm"
+                title="AI要約を生成"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>AI要約</span>
               </button>
             </div>
+
+            {/* 外部リンク遷移ボタン */}
+            <button
+              onClick={handleExternalLink}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium border border-gray-200 text-gray-600 hover:border-gray-300 transition-colors"
+              title="記事を新しいタブで開く"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="hidden sm:inline">記事を読む</span>
+            </button>
           </div>
         </div>
       </article>
